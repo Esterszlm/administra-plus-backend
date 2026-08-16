@@ -62,6 +62,40 @@ Dentro da pasta do backend, execute:
 ```bash
 pip install -r requirements.txt
 ```
+---
+
+## Como criar os dados iniciais
+
+Como o banco local `administra.db` não é enviado para o GitHub, o projeto possui um script para criar os dados iniciais do sistema.
+
+Dentro da pasta do backend, execute:
+
+```bash
+python seed_data.py
+```
+
+Esse comando cria ou verifica:
+
+- Organização inicial
+- Usuário administrador
+- Usuário viewer de teste
+- Permissões principais do sistema
+- Permissões iniciais da usuária Maria
+
+Usuário administrador de teste:
+
+```text
+username: admin@email.com
+password: 123456
+```
+
+Usuário viewer de teste:
+
+```text
+username: maria@email.com
+password: 123456
+```
+Se os dados já existirem, o script apenas informa que eles já foram criados.
 
 ---
 
