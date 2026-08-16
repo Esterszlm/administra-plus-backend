@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Ambiente virtual
+venv/
+.venv/
+env/
+ENV/
+
+# Variáveis de ambiente
+.env
+
+# Banco local
+administra.db
+
+# VS Code
+.vscode/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Cache de testes
+.pytest_cache/
+
+# Build
+build/
+dist/
+*.egg-info/
+
+# Frontend Flutter
+administra_app/
