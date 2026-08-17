@@ -447,3 +447,69 @@ Próximas evoluções recomendadas:
 * Futuramente criar logs de auditoria.
 * Futuramente implementar recuperação de senha.
 * Futuramente implementar LGPD, backup, monitoramento e autenticação corporativa.
+
+---
+
+## Versão final do projeto
+
+O projeto Administra+ possui uma versão funcional composta por backend e frontend.
+
+### Backend
+
+O backend foi desenvolvido com FastAPI e possui funcionalidades para:
+
+- Autenticação com JWT.
+- Controle de usuários.
+- Controle de organizações.
+- Controle de eventos.
+- Controle de confirmações.
+- Controle financeiro.
+- Controle de permissões.
+- Dashboard com informações consolidadas.
+
+### Frontend
+
+O frontend foi desenvolvido com Flutter Web e possui:
+
+- Tela de login.
+- Integração com o backend.
+- Uso de token JWT.
+- Dashboard.
+- Menu lateral.
+- Listagem de organizações.
+- Listagem de eventos.
+- Listagem financeira.
+- Botão de atualização.
+- Botão de sair.
+
+### Documentação complementar
+
+O projeto também possui arquivos de apoio para testes, revisão e apresentação:
+
+- `TESTES_BACKEND.md`: roteiro de testes do backend.
+- `TESTES_FRONTEND.md`: roteiro de testes do frontend.
+- `ROTEIRO_APRESENTACAO.md`: roteiro para apresentação do TCC.
+- `CHECKLIST_FINAL_TCC.md`: checklist final de entrega.
+
+### Tags de versão
+
+Foram criadas tags no Git para marcar versões importantes do projeto:
+
+```text
+v1.0-backend
+v1.0-administra-plus
+v1.1-administra-plus-documentado
+v1.2-administra-plus-entrega-final
+```
+
+A tag `v1.2-administra-plus-entrega-final` representa a versão final do projeto para entrega, contendo backend, frontend e documentação complementar.
+
+---
+
+## Status da entrega
+
+O projeto está em uma versão funcional para apresentação acadêmica.
+
+A solução implementa uma base administrativa com autenticação, permissões, gestão de dados e interface web integrada ao backend.
+
+Como evolução futura, o sistema pode receber melhorias como deploy em nuvem, banco PostgreSQL, relatórios em PDF, notificações, recuperação de senha e telas completas de cadastro e edição pelo frontend.
