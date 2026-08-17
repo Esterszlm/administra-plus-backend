@@ -33,6 +33,3 @@ Thumbs.db
 build/
 dist/
 *.egg-info/
-
-# Frontend Flutter
-administra_app/
