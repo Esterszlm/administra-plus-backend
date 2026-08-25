@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/formatters.dart';
 import '../services/api_service.dart';
-import '../widgets/info_card.dart';
-import '../widgets/list_page_layout.dart';
+import '../widgets/admin_table_page.dart';
 
 class EventsPage extends StatefulWidget {
   final ApiService apiService;
@@ -44,6 +43,12 @@ class _EventsPageState extends State<EventsPage> {
     }
   }
 
+  void showActionMessage(String text) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(text)),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -52,26 +57,64 @@ class _EventsPageState extends State<EventsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return ListPageLayout(
-      title: 'Eventos cadastrados',
-      subtitle: 'Consulta dos eventos registrados no sistema.',
+    return AdminTablePage(
+      title: 'Eventos',
+      subtitle: 'Gestão dos eventos cadastrados no sistema.',
       loading: loading,
       message: message,
       emptyMessage: 'Nenhum evento cadastrado.',
       onRefresh: loadEvents,
-      children: events.map((item) {
-        return InfoCard(
-          icon: Icons.event,
-          title: texto(item['title']),
-          subtitle: 'Local: ${texto(item['location'])}',
-          rows: [
-            InfoRow(label: 'ID', value: texto(item['id'])),
-            InfoRow(label: 'Descrição', value: texto(item['description'])),
-            InfoRow(label: 'Data', value: formatarData(item['date'])),
-            InfoRow(
-              label: 'Organização',
-              value: texto(
-                item['organization_name'] ?? item['organization_id'],
+      onNew: () => showActionMessage(
+        'Cadastro de evento será criado na próxima etapa.',
+      ),
+      columns: const [
+        DataColumn(label: Text('ID')),
+        DataColumn(label: Text('Título')),
+        DataColumn(label: Text('Local')),
+        DataColumn(label: Text('Data')),
+        DataColumn(label: Text('Organização')),
+        DataColumn(label: Text('Descrição')),
+        DataColumn(label: Text('Ações')),
+      ],
+      rows: events.map((item) {
+        return DataRow(
+          cells: [
+            DataCell(Text(texto(item['id']))),
+            DataCell(Text(texto(item['title']))),
+            DataCell(Text(texto(item['location']))),
+            DataCell(Text(formatarData(item['date']))),
+            DataCell(
+              Text(
+                texto(item['organization_name'] ?? item['organization_id']),
+              ),
+            ),
+            DataCell(
+              SizedBox(
+                width: 260,
+                child: Text(
+                  texto(item['description']),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+            DataCell(
+              Row(
+                children: [
+                  IconButton(
+                    tooltip: 'Editar',
+                    icon: const Icon(Icons.edit),
+                    onPressed: () => showActionMessage(
+                      'Edição de evento será criada na próxima etapa.',
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Excluir',
+                    icon: const Icon(Icons.delete_outline),
+                    onPressed: () => showActionMessage(
+                      'Exclusão de evento será criada na próxima etapa.',
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

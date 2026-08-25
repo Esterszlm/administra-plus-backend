@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/formatters.dart';
 import '../services/api_service.dart';
-import '../widgets/info_card.dart';
-import '../widgets/list_page_layout.dart';
+import '../widgets/admin_table_page.dart';
 
 class FinancePage extends StatefulWidget {
   final ApiService apiService;
@@ -44,6 +43,26 @@ class _FinancePageState extends State<FinancePage> {
     }
   }
 
+  void showActionMessage(String text) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(text)),
+    );
+  }
+
+  String tipoFormatado(dynamic valor) {
+    final tipo = texto(valor);
+
+    if (tipo == 'entrada') {
+      return 'Entrada';
+    }
+
+    if (tipo == 'saida') {
+      return 'Saída';
+    }
+
+    return tipo;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -52,26 +71,54 @@ class _FinancePageState extends State<FinancePage> {
 
   @override
   Widget build(BuildContext context) {
-    return ListPageLayout(
-      title: 'Lançamentos financeiros',
-      subtitle: 'Consulta das entradas e saídas registradas no sistema.',
+    return AdminTablePage(
+      title: 'Financeiro',
+      subtitle: 'Gestão dos lançamentos financeiros do sistema.',
       loading: loading,
       message: message,
       emptyMessage: 'Nenhum lançamento financeiro cadastrado.',
       onRefresh: loadFinances,
-      children: finances.map((item) {
-        return InfoCard(
-          icon: Icons.receipt_long,
-          title: texto(item['description']),
-          subtitle: 'Valor: ${formatarValor(item['amount'])}',
-          rows: [
-            InfoRow(label: 'ID', value: texto(item['id'])),
-            InfoRow(label: 'Tipo', value: texto(item['type'])),
-            InfoRow(label: 'Valor', value: formatarValor(item['amount'])),
-            InfoRow(
-              label: 'Organização',
-              value: texto(
-                item['organization_name'] ?? item['organization_id'],
+      onNew: () => showActionMessage(
+        'Cadastro financeiro será criado na próxima etapa.',
+      ),
+      columns: const [
+        DataColumn(label: Text('ID')),
+        DataColumn(label: Text('Descrição')),
+        DataColumn(label: Text('Tipo')),
+        DataColumn(label: Text('Valor')),
+        DataColumn(label: Text('Organização')),
+        DataColumn(label: Text('Ações')),
+      ],
+      rows: finances.map((item) {
+        return DataRow(
+          cells: [
+            DataCell(Text(texto(item['id']))),
+            DataCell(Text(texto(item['description']))),
+            DataCell(Text(tipoFormatado(item['type']))),
+            DataCell(Text(formatarValor(item['amount']))),
+            DataCell(
+              Text(
+                texto(item['organization_name'] ?? item['organization_id']),
+              ),
+            ),
+            DataCell(
+              Row(
+                children: [
+                  IconButton(
+                    tooltip: 'Editar',
+                    icon: const Icon(Icons.edit),
+                    onPressed: () => showActionMessage(
+                      'Edição financeira será criada na próxima etapa.',
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Excluir',
+                    icon: const Icon(Icons.delete_outline),
+                    onPressed: () => showActionMessage(
+                      'Exclusão financeira será criada na próxima etapa.',
+                    ),
+                  ),
+                ],
               ),
             ),
           ],

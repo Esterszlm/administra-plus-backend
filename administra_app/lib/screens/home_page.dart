@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
-import '../widgets/app_drawer.dart';
+import '../widgets/app_shell.dart';
 import 'dashboard_page.dart';
 import 'events_page.dart';
 import 'finance_page.dart';
@@ -42,8 +42,6 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       selectedPage = index;
     });
-
-    Navigator.pop(context);
   }
 
   void logout() {
@@ -73,16 +71,12 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('${titles[selectedPage]} — Administra+'),
-      ),
-      drawer: AppDrawer(
-        selectedIndex: selectedPage,
-        onSelectPage: selectPage,
-        onLogout: logout,
-      ),
-      body: currentPage(),
+    return AppShell(
+      selectedIndex: selectedPage,
+      title: titles[selectedPage],
+      onSelectPage: selectPage,
+      onLogout: logout,
+      child: currentPage(),
     );
   }
 }

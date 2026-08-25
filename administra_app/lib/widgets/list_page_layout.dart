@@ -26,7 +26,7 @@ class ListPageLayout extends StatelessWidget {
     return Container(
       color: AppColors.background,
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(28),
         child: loading
             ? const Center(child: CircularProgressIndicator())
             : message.isNotEmpty
@@ -40,49 +40,68 @@ class ListPageLayout extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    title,
-                                    style: const TextStyle(
-                                      color: AppColors.textPrimary,
-                                      fontSize: 26,
-                                      fontWeight: FontWeight.bold,
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      title,
+                                      style: const TextStyle(
+                                        color: AppColors.textPrimary,
+                                        fontSize: 28,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    subtitle,
-                                    style: const TextStyle(
-                                      color: AppColors.textSecondary,
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      subtitle,
+                                      style: const TextStyle(
+                                        color: AppColors.textSecondary,
+                                        fontSize: 15,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                            ElevatedButton.icon(
-                              onPressed: onRefresh,
-                              icon: const Icon(Icons.refresh),
-                              label: const Text('Atualizar'),
-                            ),
-                          ],
+                              ElevatedButton.icon(
+                                onPressed: onRefresh,
+                                icon: const Icon(Icons.refresh),
+                                label: const Text('Atualizar'),
+                              ),
+                            ],
+                          ),
                         ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 26),
                         if (children.isEmpty)
-                          Text(
-                            emptyMessage,
-                            style: const TextStyle(
-                              color: AppColors.textSecondary,
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(24),
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(color: AppColors.border),
+                            ),
+                            child: Text(
+                              emptyMessage,
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                              ),
                             ),
                           )
                         else
                           Wrap(
-                            spacing: 16,
-                            runSpacing: 16,
+                            spacing: 22,
+                            runSpacing: 22,
                             children: children,
                           ),
                       ],
