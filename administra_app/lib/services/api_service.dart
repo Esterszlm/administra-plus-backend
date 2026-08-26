@@ -20,6 +20,18 @@ class ApiService {
     return headers;
   }
 
+  Map<String, String> get _jsonHeaders {
+    final headers = <String, String>{
+      'Content-Type': 'application/json',
+    };
+
+    if (token != null && token!.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+
+    return headers;
+  }
+
   dynamic _decodeResponse(http.Response response) {
     if (response.bodyBytes.isEmpty) {
       return null;
@@ -30,6 +42,16 @@ class ApiService {
 
   void _validateResponse(http.Response response, String errorMessage) {
     if (response.statusCode < 200 || response.statusCode >= 300) {
+      try {
+        final data = _decodeResponse(response);
+
+        if (data is Map && data['detail'] != null) {
+          throw Exception(data['detail'].toString());
+        }
+      } catch (_) {
+        throw Exception(errorMessage);
+      }
+
       throw Exception(errorMessage);
     }
   }
@@ -84,6 +106,72 @@ class ApiService {
     _validateResponse(response, 'Erro ao carregar organizações.');
 
     return _decodeResponse(response);
+  }
+
+  Future<Map<String, dynamic>> createOrganization({
+    required String name,
+    required String type,
+    required String document,
+    required String address,
+    required String city,
+    required String state,
+    required String responsibleName,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/organizations/'),
+      headers: _jsonHeaders,
+      body: jsonEncode({
+        'name': name.trim(),
+        'type': type.trim(),
+        'document': document.trim(),
+        'address': address.trim(),
+        'city': city.trim(),
+        'state': state.trim(),
+        'responsible_name': responsibleName.trim(),
+      }),
+    );
+
+    _validateResponse(response, 'Erro ao cadastrar organização.');
+
+    return _decodeResponse(response);
+  }
+
+  Future<Map<String, dynamic>> updateOrganization({
+    required int id,
+    required String name,
+    required String type,
+    required String document,
+    required String address,
+    required String city,
+    required String state,
+    required String responsibleName,
+  }) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/organizations/$id'),
+      headers: _jsonHeaders,
+      body: jsonEncode({
+        'name': name.trim(),
+        'type': type.trim(),
+        'document': document.trim(),
+        'address': address.trim(),
+        'city': city.trim(),
+        'state': state.trim(),
+        'responsible_name': responsibleName.trim(),
+      }),
+    );
+
+    _validateResponse(response, 'Erro ao editar organização.');
+
+    return _decodeResponse(response);
+  }
+
+  Future<void> deleteOrganization(int id) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/organizations/$id'),
+      headers: _headers,
+    );
+
+    _validateResponse(response, 'Erro ao excluir organização.');
   }
 
   Future<List<dynamic>> getEvents() async {

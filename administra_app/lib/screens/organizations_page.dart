@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../core/formatters.dart';
 import '../services/api_service.dart';
 import '../widgets/admin_table_page.dart';
+import '../widgets/organization_form_dialog.dart';
 
 class OrganizationsPage extends StatefulWidget {
   final ApiService apiService;
@@ -43,10 +44,135 @@ class _OrganizationsPageState extends State<OrganizationsPage> {
     }
   }
 
-  void showActionMessage(String text) {
+  void showSuccess(String text) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(text)),
     );
+  }
+
+  Future<void> openCreateDialog() async {
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) {
+        return OrganizationFormDialog(
+          onSubmit: ({
+            required String name,
+            required String type,
+            required String document,
+            required String address,
+            required String city,
+            required String state,
+            required String responsibleName,
+          }) async {
+            await widget.apiService.createOrganization(
+              name: name,
+              type: type,
+              document: document,
+              address: address,
+              city: city,
+              state: state,
+              responsibleName: responsibleName,
+            );
+          },
+        );
+      },
+    );
+
+    if (result == true) {
+      showSuccess('Organização cadastrada com sucesso.');
+      await loadOrganizations();
+    }
+  }
+
+  Future<void> openEditDialog(Map<String, dynamic> organization) async {
+    final id = int.tryParse(organization['id'].toString());
+
+    if (id == null) {
+      showSuccess('ID da organização inválido.');
+      return;
+    }
+
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) {
+        return OrganizationFormDialog(
+          organization: organization,
+          onSubmit: ({
+            required String name,
+            required String type,
+            required String document,
+            required String address,
+            required String city,
+            required String state,
+            required String responsibleName,
+          }) async {
+            await widget.apiService.updateOrganization(
+              id: id,
+              name: name,
+              type: type,
+              document: document,
+              address: address,
+              city: city,
+              state: state,
+              responsibleName: responsibleName,
+            );
+          },
+        );
+      },
+    );
+
+    if (result == true) {
+      showSuccess('Organização atualizada com sucesso.');
+      await loadOrganizations();
+    }
+  }
+
+  Future<void> confirmDelete(Map<String, dynamic> organization) async {
+    final id = int.tryParse(organization['id'].toString());
+
+    if (id == null) {
+      showSuccess('ID da organização inválido.');
+      return;
+    }
+
+    final name = texto(organization['name']);
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (_) {
+        return AlertDialog(
+          title: const Text('Excluir organização'),
+          content: Text(
+            'Tem certeza que deseja excluir a organização "$name"?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton.icon(
+              onPressed: () => Navigator.pop(context, true),
+              icon: const Icon(Icons.delete_outline),
+              label: const Text('Excluir'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (result == true) {
+      try {
+        await widget.apiService.deleteOrganization(id);
+        showSuccess('Organização excluída com sucesso.');
+        await loadOrganizations();
+      } catch (e) {
+        showSuccess(
+          e.toString().replaceAll('Exception: ', ''),
+        );
+      }
+    }
   }
 
   @override
@@ -64,7 +190,7 @@ class _OrganizationsPageState extends State<OrganizationsPage> {
       message: message,
       emptyMessage: 'Nenhuma organização cadastrada.',
       onRefresh: loadOrganizations,
-      onNew: () => showActionMessage('Cadastro de organização será criado na próxima etapa.'),
+      onNew: openCreateDialog,
       columns: const [
         DataColumn(label: Text('ID')),
         DataColumn(label: Text('Nome')),
@@ -91,12 +217,20 @@ class _OrganizationsPageState extends State<OrganizationsPage> {
                   IconButton(
                     tooltip: 'Editar',
                     icon: const Icon(Icons.edit),
-                    onPressed: () => showActionMessage('Edição será criada na próxima etapa.'),
+                    onPressed: () {
+                      openEditDialog(
+                        Map<String, dynamic>.from(item),
+                      );
+                    },
                   ),
                   IconButton(
                     tooltip: 'Excluir',
                     icon: const Icon(Icons.delete_outline),
-                    onPressed: () => showActionMessage('Exclusão será criada na próxima etapa.'),
+                    onPressed: () {
+                      confirmDelete(
+                        Map<String, dynamic>.from(item),
+                      );
+                    },
                   ),
                 ],
               ),
