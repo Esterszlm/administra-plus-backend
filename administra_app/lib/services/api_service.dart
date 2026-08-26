@@ -41,19 +41,23 @@ class ApiService {
   }
 
   void _validateResponse(http.Response response, String errorMessage) {
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      try {
-        final data = _decodeResponse(response);
-
-        if (data is Map && data['detail'] != null) {
-          throw Exception(data['detail'].toString());
-        }
-      } catch (_) {
-        throw Exception(errorMessage);
-      }
-
-      throw Exception(errorMessage);
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return;
     }
+
+    try {
+      final data = _decodeResponse(response);
+
+      if (data is Map && data['detail'] != null) {
+        throw Exception(data['detail'].toString());
+      }
+    } catch (e) {
+      if (e is Exception) {
+        rethrow;
+      }
+    }
+
+    throw Exception(errorMessage);
   }
 
   Future<String> login({
@@ -185,6 +189,64 @@ class ApiService {
     return _decodeResponse(response);
   }
 
+  Future<Map<String, dynamic>> createEvent({
+    required String title,
+    required String description,
+    required String date,
+    required String location,
+    required int organizationId,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/events/'),
+      headers: _jsonHeaders,
+      body: jsonEncode({
+        'title': title.trim(),
+        'description': description.trim(),
+        'date': date.trim(),
+        'location': location.trim(),
+        'organization_id': organizationId,
+      }),
+    );
+
+    _validateResponse(response, 'Erro ao cadastrar evento.');
+
+    return _decodeResponse(response);
+  }
+
+  Future<Map<String, dynamic>> updateEvent({
+    required int id,
+    required String title,
+    required String description,
+    required String date,
+    required String location,
+    required int organizationId,
+  }) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/events/$id'),
+      headers: _jsonHeaders,
+      body: jsonEncode({
+        'title': title.trim(),
+        'description': description.trim(),
+        'date': date.trim(),
+        'location': location.trim(),
+        'organization_id': organizationId,
+      }),
+    );
+
+    _validateResponse(response, 'Erro ao editar evento.');
+
+    return _decodeResponse(response);
+  }
+
+  Future<void> deleteEvent(int id) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/events/$id'),
+      headers: _headers,
+    );
+
+    _validateResponse(response, 'Erro ao excluir evento.');
+  }
+
   Future<List<dynamic>> getFinance() async {
     final response = await http.get(
       Uri.parse('$baseUrl/finance/'),
@@ -196,61 +258,57 @@ class ApiService {
     return _decodeResponse(response);
   }
 
-  Future<Map<String, dynamic>> createEvent({
-  required String title,
-  required String description,
-  required String date,
-  required String location,
-  required int organizationId,
-}) async {
-  final response = await http.post(
-    Uri.parse('$baseUrl/events/'),
-    headers: _jsonHeaders,
-    body: jsonEncode({
-      'title': title.trim(),
-      'description': description.trim(),
-      'date': date.trim(),
-      'location': location.trim(),
-      'organization_id': organizationId,
-    }),
-  );
+  Future<Map<String, dynamic>> createFinance({
+    required String type,
+    required double amount,
+    required String description,
+    required int organizationId,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/finance/'),
+      headers: _jsonHeaders,
+      body: jsonEncode({
+        'type': type.trim(),
+        'amount': amount,
+        'description': description.trim(),
+        'organization_id': organizationId,
+      }),
+    );
 
-  _validateResponse(response, 'Erro ao cadastrar evento.');
+    _validateResponse(response, 'Erro ao cadastrar lançamento financeiro.');
 
-  return _decodeResponse(response);
-}
+    return _decodeResponse(response);
+  }
 
-Future<Map<String, dynamic>> updateEvent({
-  required int id,
-  required String title,
-  required String description,
-  required String date,
-  required String location,
-  required int organizationId,
-}) async {
-  final response = await http.put(
-    Uri.parse('$baseUrl/events/$id'),
-    headers: _jsonHeaders,
-    body: jsonEncode({
-      'title': title.trim(),
-      'description': description.trim(),
-      'date': date.trim(),
-      'location': location.trim(),
-      'organization_id': organizationId,
-    }),
-  );
+  Future<Map<String, dynamic>> updateFinance({
+    required int id,
+    required String type,
+    required double amount,
+    required String description,
+    required int organizationId,
+  }) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/finance/$id'),
+      headers: _jsonHeaders,
+      body: jsonEncode({
+        'type': type.trim(),
+        'amount': amount,
+        'description': description.trim(),
+        'organization_id': organizationId,
+      }),
+    );
 
-  _validateResponse(response, 'Erro ao editar evento.');
+    _validateResponse(response, 'Erro ao editar lançamento financeiro.');
 
-  return _decodeResponse(response);
-}
+    return _decodeResponse(response);
+  }
 
-Future<void> deleteEvent(int id) async {
-  final response = await http.delete(
-    Uri.parse('$baseUrl/events/$id'),
-    headers: _headers,
-  );
+  Future<void> deleteFinance(int id) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/finance/$id'),
+      headers: _headers,
+    );
 
-  _validateResponse(response, 'Erro ao excluir evento.');
-}
+    _validateResponse(response, 'Erro ao excluir lançamento financeiro.');
+  }
 }

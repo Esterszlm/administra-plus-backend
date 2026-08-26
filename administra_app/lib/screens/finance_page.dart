@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import '../core/app_colors.dart';
 import '../core/formatters.dart';
 import '../services/api_service.dart';
 import '../widgets/admin_table_page.dart';
+import '../widgets/finance_form_dialog.dart';
 
 class FinancePage extends StatefulWidget {
   final ApiService apiService;
@@ -19,18 +21,21 @@ class _FinancePageState extends State<FinancePage> {
   bool loading = true;
   String message = '';
   List<dynamic> finances = [];
+  List<dynamic> organizations = [];
 
-  Future<void> loadFinances() async {
+  Future<void> loadData() async {
     setState(() {
       loading = true;
       message = '';
     });
 
     try {
-      final data = await widget.apiService.getFinance();
+      final financeData = await widget.apiService.getFinance();
+      final organizationsData = await widget.apiService.getOrganizations();
 
       setState(() {
-        finances = data;
+        finances = financeData;
+        organizations = organizationsData;
       });
     } catch (e) {
       setState(() {
@@ -43,7 +48,7 @@ class _FinancePageState extends State<FinancePage> {
     }
   }
 
-  void showActionMessage(String text) {
+  void showSuccess(String text) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(text)),
     );
@@ -63,10 +68,139 @@ class _FinancePageState extends State<FinancePage> {
     return tipo;
   }
 
+  Color tipoCor(dynamic valor) {
+    final tipo = texto(valor);
+
+    if (tipo == 'entrada') {
+      return AppColors.success;
+    }
+
+    if (tipo == 'saida') {
+      return AppColors.danger;
+    }
+
+    return AppColors.textSecondary;
+  }
+
+  Future<void> openCreateDialog() async {
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) {
+        return FinanceFormDialog(
+          organizations: organizations,
+          onSubmit: ({
+            required String type,
+            required double amount,
+            required String description,
+            required int organizationId,
+          }) async {
+            await widget.apiService.createFinance(
+              type: type,
+              amount: amount,
+              description: description,
+              organizationId: organizationId,
+            );
+          },
+        );
+      },
+    );
+
+    if (result == true) {
+      showSuccess('Lançamento financeiro cadastrado com sucesso.');
+      await loadData();
+    }
+  }
+
+  Future<void> openEditDialog(Map<String, dynamic> finance) async {
+    final id = int.tryParse(finance['id'].toString());
+
+    if (id == null) {
+      showSuccess('ID do lançamento inválido.');
+      return;
+    }
+
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) {
+        return FinanceFormDialog(
+          finance: finance,
+          organizations: organizations,
+          onSubmit: ({
+            required String type,
+            required double amount,
+            required String description,
+            required int organizationId,
+          }) async {
+            await widget.apiService.updateFinance(
+              id: id,
+              type: type,
+              amount: amount,
+              description: description,
+              organizationId: organizationId,
+            );
+          },
+        );
+      },
+    );
+
+    if (result == true) {
+      showSuccess('Lançamento financeiro atualizado com sucesso.');
+      await loadData();
+    }
+  }
+
+  Future<void> confirmDelete(Map<String, dynamic> finance) async {
+    final id = int.tryParse(finance['id'].toString());
+
+    if (id == null) {
+      showSuccess('ID do lançamento inválido.');
+      return;
+    }
+
+    final description = texto(finance['description']);
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (_) {
+        return AlertDialog(
+          title: const Text('Excluir lançamento financeiro'),
+          content: Text(
+            'Tem certeza que deseja excluir o lançamento "$description"?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton.icon(
+              onPressed: () => Navigator.pop(context, true),
+              icon: const Icon(Icons.delete_outline),
+              label: const Text('Excluir'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (result == true) {
+      try {
+        await widget.apiService.deleteFinance(id);
+        showSuccess('Lançamento financeiro excluído com sucesso.');
+        await loadData();
+      } catch (e) {
+        showSuccess(
+          e.toString().replaceAll('Exception: ', ''),
+        );
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    loadFinances();
+    loadData();
   }
 
   @override
@@ -77,10 +211,8 @@ class _FinancePageState extends State<FinancePage> {
       loading: loading,
       message: message,
       emptyMessage: 'Nenhum lançamento financeiro cadastrado.',
-      onRefresh: loadFinances,
-      onNew: () => showActionMessage(
-        'Cadastro financeiro será criado na próxima etapa.',
-      ),
+      onRefresh: loadData,
+      onNew: openCreateDialog,
       columns: const [
         DataColumn(label: Text('ID')),
         DataColumn(label: Text('Descrição')),
@@ -94,7 +226,15 @@ class _FinancePageState extends State<FinancePage> {
           cells: [
             DataCell(Text(texto(item['id']))),
             DataCell(Text(texto(item['description']))),
-            DataCell(Text(tipoFormatado(item['type']))),
+            DataCell(
+              Text(
+                tipoFormatado(item['type']),
+                style: TextStyle(
+                  color: tipoCor(item['type']),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
             DataCell(Text(formatarValor(item['amount']))),
             DataCell(
               Text(
@@ -107,16 +247,20 @@ class _FinancePageState extends State<FinancePage> {
                   IconButton(
                     tooltip: 'Editar',
                     icon: const Icon(Icons.edit),
-                    onPressed: () => showActionMessage(
-                      'Edição financeira será criada na próxima etapa.',
-                    ),
+                    onPressed: () {
+                      openEditDialog(
+                        Map<String, dynamic>.from(item),
+                      );
+                    },
                   ),
                   IconButton(
                     tooltip: 'Excluir',
                     icon: const Icon(Icons.delete_outline),
-                    onPressed: () => showActionMessage(
-                      'Exclusão financeira será criada na próxima etapa.',
-                    ),
+                    onPressed: () {
+                      confirmDelete(
+                        Map<String, dynamic>.from(item),
+                      );
+                    },
                   ),
                 ],
               ),
