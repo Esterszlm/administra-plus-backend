@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../core/formatters.dart';
 import '../services/api_service.dart';
 import '../widgets/admin_table_page.dart';
+import '../widgets/event_form_dialog.dart';
 
 class EventsPage extends StatefulWidget {
   final ApiService apiService;
@@ -19,18 +20,21 @@ class _EventsPageState extends State<EventsPage> {
   bool loading = true;
   String message = '';
   List<dynamic> events = [];
+  List<dynamic> organizations = [];
 
-  Future<void> loadEvents() async {
+  Future<void> loadData() async {
     setState(() {
       loading = true;
       message = '';
     });
 
     try {
-      final data = await widget.apiService.getEvents();
+      final eventsData = await widget.apiService.getEvents();
+      final organizationsData = await widget.apiService.getOrganizations();
 
       setState(() {
-        events = data;
+        events = eventsData;
+        organizations = organizationsData;
       });
     } catch (e) {
       setState(() {
@@ -43,16 +47,135 @@ class _EventsPageState extends State<EventsPage> {
     }
   }
 
-  void showActionMessage(String text) {
+  void showSuccess(String text) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(text)),
     );
   }
 
+  Future<void> openCreateDialog() async {
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) {
+        return EventFormDialog(
+          organizations: organizations,
+          onSubmit: ({
+            required String title,
+            required String description,
+            required String date,
+            required String location,
+            required int organizationId,
+          }) async {
+            await widget.apiService.createEvent(
+              title: title,
+              description: description,
+              date: date,
+              location: location,
+              organizationId: organizationId,
+            );
+          },
+        );
+      },
+    );
+
+    if (result == true) {
+      showSuccess('Evento cadastrado com sucesso.');
+      await loadData();
+    }
+  }
+
+  Future<void> openEditDialog(Map<String, dynamic> event) async {
+    final id = int.tryParse(event['id'].toString());
+
+    if (id == null) {
+      showSuccess('ID do evento inválido.');
+      return;
+    }
+
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) {
+        return EventFormDialog(
+          event: event,
+          organizations: organizations,
+          onSubmit: ({
+            required String title,
+            required String description,
+            required String date,
+            required String location,
+            required int organizationId,
+          }) async {
+            await widget.apiService.updateEvent(
+              id: id,
+              title: title,
+              description: description,
+              date: date,
+              location: location,
+              organizationId: organizationId,
+            );
+          },
+        );
+      },
+    );
+
+    if (result == true) {
+      showSuccess('Evento atualizado com sucesso.');
+      await loadData();
+    }
+  }
+
+  Future<void> confirmDelete(Map<String, dynamic> event) async {
+    final id = int.tryParse(event['id'].toString());
+
+    if (id == null) {
+      showSuccess('ID do evento inválido.');
+      return;
+    }
+
+    final title = texto(event['title']);
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (_) {
+        return AlertDialog(
+          title: const Text('Excluir evento'),
+          content: Text(
+            'Tem certeza que deseja excluir o evento "$title"?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton.icon(
+              onPressed: () => Navigator.pop(context, true),
+              icon: const Icon(Icons.delete_outline),
+              label: const Text('Excluir'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (result == true) {
+      try {
+        await widget.apiService.deleteEvent(id);
+        showSuccess('Evento excluído com sucesso.');
+        await loadData();
+      } catch (e) {
+        showSuccess(
+          e.toString().replaceAll('Exception: ', ''),
+        );
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    loadEvents();
+    loadData();
   }
 
   @override
@@ -63,10 +186,8 @@ class _EventsPageState extends State<EventsPage> {
       loading: loading,
       message: message,
       emptyMessage: 'Nenhum evento cadastrado.',
-      onRefresh: loadEvents,
-      onNew: () => showActionMessage(
-        'Cadastro de evento será criado na próxima etapa.',
-      ),
+      onRefresh: loadData,
+      onNew: openCreateDialog,
       columns: const [
         DataColumn(label: Text('ID')),
         DataColumn(label: Text('Título')),
@@ -103,16 +224,20 @@ class _EventsPageState extends State<EventsPage> {
                   IconButton(
                     tooltip: 'Editar',
                     icon: const Icon(Icons.edit),
-                    onPressed: () => showActionMessage(
-                      'Edição de evento será criada na próxima etapa.',
-                    ),
+                    onPressed: () {
+                      openEditDialog(
+                        Map<String, dynamic>.from(item),
+                      );
+                    },
                   ),
                   IconButton(
                     tooltip: 'Excluir',
                     icon: const Icon(Icons.delete_outline),
-                    onPressed: () => showActionMessage(
-                      'Exclusão de evento será criada na próxima etapa.',
-                    ),
+                    onPressed: () {
+                      confirmDelete(
+                        Map<String, dynamic>.from(item),
+                      );
+                    },
                   ),
                 ],
               ),

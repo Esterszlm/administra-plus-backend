@@ -195,4 +195,62 @@ class ApiService {
 
     return _decodeResponse(response);
   }
+
+  Future<Map<String, dynamic>> createEvent({
+  required String title,
+  required String description,
+  required String date,
+  required String location,
+  required int organizationId,
+}) async {
+  final response = await http.post(
+    Uri.parse('$baseUrl/events/'),
+    headers: _jsonHeaders,
+    body: jsonEncode({
+      'title': title.trim(),
+      'description': description.trim(),
+      'date': date.trim(),
+      'location': location.trim(),
+      'organization_id': organizationId,
+    }),
+  );
+
+  _validateResponse(response, 'Erro ao cadastrar evento.');
+
+  return _decodeResponse(response);
+}
+
+Future<Map<String, dynamic>> updateEvent({
+  required int id,
+  required String title,
+  required String description,
+  required String date,
+  required String location,
+  required int organizationId,
+}) async {
+  final response = await http.put(
+    Uri.parse('$baseUrl/events/$id'),
+    headers: _jsonHeaders,
+    body: jsonEncode({
+      'title': title.trim(),
+      'description': description.trim(),
+      'date': date.trim(),
+      'location': location.trim(),
+      'organization_id': organizationId,
+    }),
+  );
+
+  _validateResponse(response, 'Erro ao editar evento.');
+
+  return _decodeResponse(response);
+}
+
+Future<void> deleteEvent(int id) async {
+  final response = await http.delete(
+    Uri.parse('$baseUrl/events/$id'),
+    headers: _headers,
+  );
+
+  _validateResponse(response, 'Erro ao excluir evento.');
+}
 }
