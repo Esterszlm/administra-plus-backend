@@ -6,6 +6,7 @@ import 'events_page.dart';
 import 'finance_page.dart';
 import 'login_page.dart';
 import 'organizations_page.dart';
+import 'users_page.dart';
 
 class HomePage extends StatefulWidget {
   final String token;
@@ -29,6 +30,7 @@ class _HomePageState extends State<HomePage> {
     'Organizações',
     'Eventos',
     'Financeiro',
+    'Usuários',
   ];
 
   ApiService get apiService {
@@ -39,6 +41,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   void selectPage(int index) {
+    if (index < 0 || index >= titles.length) return;
+
     setState(() {
       selectedPage = index;
     });
@@ -66,7 +70,11 @@ class _HomePageState extends State<HomePage> {
       return EventsPage(apiService: apiService);
     }
 
-    return FinancePage(apiService: apiService);
+    if (selectedPage == 3) {
+      return FinancePage(apiService: apiService);
+    }
+
+    return UsersPage(apiService: apiService);
   }
 
   @override

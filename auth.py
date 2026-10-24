@@ -1,3 +1,4 @@
+
 from passlib.context import CryptContext
 from jose import jwt, JWTError
 from datetime import datetime, timedelta
@@ -8,13 +9,28 @@ from sqlalchemy.orm import Session
 from database import SessionLocal
 import models
 
+
+# ==========================================================
+# CONFIGURAÇÕES DE AUTENTICAÇÃO JWT
+# ==========================================================
+
 SECRET_KEY = "administra_secret"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
-pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login")
+# ==========================================================
+# CRIPTOGRAFIA DE SENHAS
+# ==========================================================
+
+pwd_context = CryptContext(
+    schemes=["pbkdf2_sha256"],
+    deprecated="auto"
+)
+
+oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl="/users/login"
+)
 
 
 def hash_password(password: str):
@@ -25,20 +41,45 @@ def verify_password(password, hashed):
     return pwd_context.verify(password, hashed)
 
 
+# ==========================================================
+# GERAÇÃO DO TOKEN JWT
+# ==========================================================
+
 def create_token(data: dict):
     to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
+    expire = datetime.utcnow() + timedelta(
+        minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+    )
+
+    to_encode.update({
+        "exp": expire
+    })
+
+    return jwt.encode(
+        to_encode,
+        SECRET_KEY,
+        algorithm=ALGORITHM
+    )
+
+
+# ==========================================================
+# CONEXÃO COM O BANCO DE DADOS
+# ==========================================================
 
 def get_db():
     db = SessionLocal()
+
     try:
         yield db
     finally:
         db.close()
 
+
+# ==========================================================
+# AUTENTICAÇÃO DO USUÁRIO
+# VALIDA JWT, EXISTÊNCIA E STATUS ATIVO
+# ==========================================================
 
 def get_current_user(
     token: str = Depends(oauth2_scheme),
@@ -47,11 +88,22 @@ def get_current_user(
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Token inválido ou expirado",
-        headers={"WWW-Authenticate": "Bearer"},
+        headers={
+            "WWW-Authenticate": "Bearer"
+        },
     )
 
+    # ------------------------------------------------------
+    # 1. Validar token JWT
+    # ------------------------------------------------------
+
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(
+            token,
+            SECRET_KEY,
+            algorithms=[ALGORITHM]
+        )
+
         user_id = payload.get("user_id")
 
         if user_id is None:
@@ -60,24 +112,69 @@ def get_current_user(
     except JWTError:
         raise credentials_exception
 
-    user = db.query(models.User).filter(models.User.id == user_id).first()
+    # ------------------------------------------------------
+    # 2. Consultar usuário no banco
+    # ------------------------------------------------------
+
+    user = db.query(models.User).filter(
+        models.User.id == user_id
+    ).first()
+
+    # ------------------------------------------------------
+    # 3. Bloquear usuário inexistente
+    # ------------------------------------------------------
 
     if user is None:
         raise credentials_exception
 
+    # ------------------------------------------------------
+    # 4. Bloquear usuário desativado
+    # ------------------------------------------------------
+
+    if user.is_active is not True:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=(
+                "Usuário desativado. "
+                "Entre em contato com o administrador."
+            ),
+            headers={
+                "WWW-Authenticate": "Bearer"
+            },
+        )
+
+    # ------------------------------------------------------
+    # 5. Permitir acesso ao usuário ativo
+    # ------------------------------------------------------
+
     return user
 
 
-def user_has_permission(user, permission_name: str, db: Session):
+# ==========================================================
+# VERIFICAÇÃO DE PERMISSÕES
+# ==========================================================
+
+def user_has_permission(
+    user,
+    permission_name: str,
+    db: Session
+):
+    # Administrador ativo possui todas as permissões.
+    # O status ativo já foi validado em get_current_user.
+
     if user.role == "admin":
         return True
 
-    user_permissions = db.query(models.UserPermission).filter(
+    user_permissions = db.query(
+        models.UserPermission
+    ).filter(
         models.UserPermission.user_id == user.id
     ).all()
 
     for user_permission in user_permissions:
-        permission = db.query(models.Permission).filter(
+        permission = db.query(
+            models.Permission
+        ).filter(
             models.Permission.id == user_permission.permission_id
         ).first()
 
@@ -87,15 +184,28 @@ def user_has_permission(user, permission_name: str, db: Session):
     return False
 
 
+# ==========================================================
+# PROTEÇÃO DOS ENDPOINTS POR PERMISSÃO
+# ==========================================================
+
 def require_permission(permission_name: str):
+
     def permission_checker(
         current_user=Depends(get_current_user),
         db: Session = Depends(get_db)
     ):
+
+        # Usuários desativados já são bloqueados antes
+        # desta etapa pela função get_current_user.
+
         if current_user.role == "admin":
             return current_user
 
-        has_permission = user_has_permission(current_user, permission_name, db)
+        has_permission = user_has_permission(
+            current_user,
+            permission_name,
+            db
+        )
 
         if not has_permission:
             raise HTTPException(

@@ -138,6 +138,11 @@ class AppShell extends StatelessWidget {
             title: 'Financeiro',
             index: 3,
           ),
+          _menuItem(
+            icon: Icons.people_outline,
+            title: 'Usuários',
+            index: 4,
+          ),
           const Spacer(),
           Container(
             margin: const EdgeInsets.all(14),

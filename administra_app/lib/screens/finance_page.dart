@@ -22,8 +22,16 @@ class _FinancePageState extends State<FinancePage> {
   String message = '';
   List<dynamic> finances = [];
   List<dynamic> organizations = [];
+  List<dynamic> users = [];
+
+  @override
+  void initState() {
+    super.initState();
+    loadData();
+  }
 
   Future<void> loadData() async {
+    if (!mounted) return;
     setState(() {
       loading = true;
       message = '';
@@ -33,22 +41,33 @@ class _FinancePageState extends State<FinancePage> {
       final financeData = await widget.apiService.getFinance();
       final organizationsData = await widget.apiService.getOrganizations();
 
+      // Financeiro e Usuários usam permissões distintas. Se a conta não puder
+      // listar usuários, a consulta financeira continua funcionando.
+      List<dynamic> usersData = [];
+      try {
+        usersData = await widget.apiService.getUsers();
+      } catch (_) {
+        usersData = [];
+      }
+
+      if (!mounted) return;
       setState(() {
         finances = financeData;
         organizations = organizationsData;
+        users = usersData;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
-        message = 'Erro ao carregar financeiro.';
+        message = e.toString().replaceFirst('Exception: ', '');
       });
     } finally {
-      setState(() {
-        loading = false;
-      });
+      if (mounted) setState(() => loading = false);
     }
   }
 
-  void showSuccess(String text) {
+  void showMessage(String text) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(text)),
     );
@@ -56,151 +75,148 @@ class _FinancePageState extends State<FinancePage> {
 
   String tipoFormatado(dynamic valor) {
     final tipo = texto(valor);
-
-    if (tipo == 'entrada') {
-      return 'Entrada';
-    }
-
-    if (tipo == 'saida') {
-      return 'Saída';
-    }
-
+    if (tipo == 'entrada') return 'Entrada';
+    if (tipo == 'saida') return 'Saída';
     return tipo;
   }
 
   Color tipoCor(dynamic valor) {
     final tipo = texto(valor);
-
-    if (tipo == 'entrada') {
-      return AppColors.success;
-    }
-
-    if (tipo == 'saida') {
-      return AppColors.danger;
-    }
-
+    if (tipo == 'entrada') return AppColors.success;
+    if (tipo == 'saida') return AppColors.danger;
     return AppColors.textSecondary;
+  }
+
+  String usuarioFormatado(Map<String, dynamic> finance) {
+    final userName = finance['user_name']?.toString();
+    if (userName != null && userName.trim().isNotEmpty) {
+      return userName;
+    }
+
+    final userId = finance['user_id'];
+    if (userId == null) return 'Sem usuário';
+
+    for (final item in users) {
+      if (item is Map && item['id'].toString() == userId.toString()) {
+        return item['name']?.toString() ?? 'Usuário #$userId';
+      }
+    }
+    return 'Usuário #$userId';
   }
 
   Future<void> openCreateDialog() async {
     final result = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      builder: (_) {
-        return FinanceFormDialog(
-          organizations: organizations,
-          onSubmit: ({
-            required String type,
-            required double amount,
-            required String description,
-            required int organizationId,
-          }) async {
-            await widget.apiService.createFinance(
-              type: type,
-              amount: amount,
-              description: description,
-              organizationId: organizationId,
-            );
-          },
-        );
-      },
+      builder: (_) => FinanceFormDialog(
+        organizations: organizations,
+        users: users,
+        onSubmit: ({
+          required String type,
+          required double amount,
+          required String description,
+          required int organizationId,
+          int? userId,
+        }) async {
+          await widget.apiService.createFinance(
+            type: type,
+            amount: amount,
+            description: description,
+            organizationId: organizationId,
+            userId: userId,
+          );
+        },
+      ),
     );
 
-    if (result == true) {
-      showSuccess('Lançamento financeiro cadastrado com sucesso.');
-      await loadData();
+    if (!mounted || result != true) return;
+    await loadData();
+    if (message.isEmpty) {
+      showMessage('Lançamento financeiro cadastrado com sucesso.');
     }
   }
 
   Future<void> openEditDialog(Map<String, dynamic> finance) async {
     final id = int.tryParse(finance['id'].toString());
-
     if (id == null) {
-      showSuccess('ID do lançamento inválido.');
+      showMessage('ID do lançamento inválido.');
       return;
     }
 
     final result = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      builder: (_) {
-        return FinanceFormDialog(
-          finance: finance,
-          organizations: organizations,
-          onSubmit: ({
-            required String type,
-            required double amount,
-            required String description,
-            required int organizationId,
-          }) async {
-            await widget.apiService.updateFinance(
-              id: id,
-              type: type,
-              amount: amount,
-              description: description,
-              organizationId: organizationId,
-            );
-          },
-        );
-      },
+      builder: (_) => FinanceFormDialog(
+        finance: finance,
+        organizations: organizations,
+        users: users,
+        onSubmit: ({
+          required String type,
+          required double amount,
+          required String description,
+          required int organizationId,
+          int? userId,
+        }) async {
+          await widget.apiService.updateFinance(
+            id: id,
+            type: type,
+            amount: amount,
+            description: description,
+            organizationId: organizationId,
+            userId: userId,
+          );
+        },
+      ),
     );
 
-    if (result == true) {
-      showSuccess('Lançamento financeiro atualizado com sucesso.');
-      await loadData();
+    if (!mounted || result != true) return;
+    await loadData();
+    if (message.isEmpty) {
+      showMessage('Lançamento financeiro atualizado com sucesso.');
     }
   }
 
   Future<void> confirmDelete(Map<String, dynamic> finance) async {
     final id = int.tryParse(finance['id'].toString());
-
     if (id == null) {
-      showSuccess('ID do lançamento inválido.');
+      showMessage('ID do lançamento inválido.');
       return;
     }
 
     final description = texto(finance['description']);
-
     final result = await showDialog<bool>(
       context: context,
-      builder: (_) {
-        return AlertDialog(
-          title: const Text('Excluir lançamento financeiro'),
-          content: Text(
-            'Tem certeza que deseja excluir o lançamento "$description"?',
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Excluir lançamento financeiro'),
+        content: Text(
+          'Tem certeza que deseja excluir o lançamento "$description"?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancelar'),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancelar'),
-            ),
-            ElevatedButton.icon(
-              onPressed: () => Navigator.pop(context, true),
-              icon: const Icon(Icons.delete_outline),
-              label: const Text('Excluir'),
-            ),
-          ],
-        );
-      },
+          ElevatedButton.icon(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            icon: const Icon(Icons.delete_outline),
+            label: const Text('Excluir'),
+          ),
+        ],
+      ),
     );
 
-    if (result == true) {
-      try {
-        await widget.apiService.deleteFinance(id);
-        showSuccess('Lançamento financeiro excluído com sucesso.');
-        await loadData();
-      } catch (e) {
-        showSuccess(
-          e.toString().replaceAll('Exception: ', ''),
-        );
-      }
-    }
-  }
+    if (!mounted || result != true) return;
 
-  @override
-  void initState() {
-    super.initState();
-    loadData();
+    try {
+      await widget.apiService.deleteFinance(id);
+      if (!mounted) return;
+      await loadData();
+      if (message.isEmpty) {
+        showMessage('Lançamento financeiro excluído com sucesso.');
+      }
+    } catch (e) {
+      showMessage(e.toString().replaceFirst('Exception: ', ''));
+    }
   }
 
   @override
@@ -219,9 +235,11 @@ class _FinancePageState extends State<FinancePage> {
         DataColumn(label: Text('Tipo')),
         DataColumn(label: Text('Valor')),
         DataColumn(label: Text('Organização')),
+        DataColumn(label: Text('Usuário vinculado')),
         DataColumn(label: Text('Ações')),
       ],
-      rows: finances.map((item) {
+      rows: finances.whereType<Map>().map((value) {
+        final item = Map<String, dynamic>.from(value);
         return DataRow(
           cells: [
             DataCell(Text(texto(item['id']))),
@@ -236,31 +254,23 @@ class _FinancePageState extends State<FinancePage> {
               ),
             ),
             DataCell(Text(formatarValor(item['amount']))),
-            DataCell(
-              Text(
-                texto(item['organization_name'] ?? item['organization_id']),
-              ),
-            ),
+            DataCell(Text(
+              texto(item['organization_name'] ?? item['organization_id']),
+            )),
+            DataCell(Text(usuarioFormatado(item))),
             DataCell(
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   IconButton(
                     tooltip: 'Editar',
-                    icon: const Icon(Icons.edit),
-                    onPressed: () {
-                      openEditDialog(
-                        Map<String, dynamic>.from(item),
-                      );
-                    },
+                    icon: const Icon(Icons.edit_outlined),
+                    onPressed: () => openEditDialog(item),
                   ),
                   IconButton(
                     tooltip: 'Excluir',
                     icon: const Icon(Icons.delete_outline),
-                    onPressed: () {
-                      confirmDelete(
-                        Map<String, dynamic>.from(item),
-                      );
-                    },
+                    onPressed: () => confirmDelete(item),
                   ),
                 ],
               ),

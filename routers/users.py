@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from database import SessionLocal
+from models import utc_now_naive
 import models, schemas, auth
-from fastapi.security import OAuth2PasswordRequestForm
 
 router = APIRouter(prefix="/users")
 
@@ -16,142 +17,102 @@ def get_db():
 
 
 def validate_role(role: str):
-    normalized_role = role.strip().lower()
+    value = role.strip().lower()
+    if value not in ("admin", "viewer"):
+        raise HTTPException(status_code=400, detail="Role inválida. Use 'admin' ou 'viewer'")
+    return value
 
-    if normalized_role not in ["admin", "viewer"]:
-        raise HTTPException(
-            status_code=400,
-            detail="Role inválida. Use 'admin' ou 'viewer'"
-        )
 
-    return normalized_role
+def find_user(db: Session, user_id: int):
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if user is None:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    return user
 
 
 def get_organization_name(db: Session, organization_id: int | None):
-    if not organization_id:
+    if organization_id is None:
         return None
-
-    organization = db.query(models.Organization).filter(
+    org = db.query(models.Organization).filter(
         models.Organization.id == organization_id
     ).first()
-
-    if not organization:
-        raise HTTPException(
-            status_code=404,
-            detail="Organização não encontrada"
-        )
-
-    return organization.name
+    if org is None:
+        raise HTTPException(status_code=404, detail="Organização não encontrada")
+    return org.name
 
 
-def count_admin_users(db: Session):
+def count_active_admins(db: Session):
     return db.query(models.User).filter(
-        models.User.role == "admin"
+        models.User.role == "admin", models.User.is_active.is_(True)
     ).count()
+
+
+def serialize_user(db: Session, user: models.User):
+    org = (
+        db.query(models.Organization)
+        .filter(models.Organization.id == user.organization_id).first()
+        if user.organization_id is not None else None
+    )
+    return {
+        "id": user.id,
+        "name": user.name,
+        "email": user.email,
+        "role": user.role,
+        "organization_id": user.organization_id,
+        "organization_name": org.name if org else None,
+        "is_active": bool(user.is_active),
+        "created_at": user.created_at,
+        "deactivated_at": user.deactivated_at,
+        "deactivation_reason": user.deactivation_reason,
+    }
 
 
 @router.post("/", response_model=schemas.UserResponse)
 def create_user(
     user: schemas.UserCreate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(auth.require_permission("users_create"))
+    current_user: models.User = Depends(auth.require_permission("users_create")),
 ):
-    existing_user = db.query(models.User).filter(
-        models.User.email == user.email
-    ).first()
-
-    if existing_user:
-        raise HTTPException(
-            status_code=400,
-            detail="Email já cadastrado"
-        )
-
+    email = user.email.strip().lower()
+    if not user.name.strip() or not email or not user.password:
+        raise HTTPException(status_code=400, detail="Nome, e-mail e senha são obrigatórios")
+    if db.query(models.User).filter(models.User.email == email).first():
+        raise HTTPException(status_code=400, detail="E-mail já cadastrado")
     role = validate_role(user.role)
-    organization_name = get_organization_name(db, user.organization_id)
-
-    hashed_password = auth.hash_password(user.password)
-
+    get_organization_name(db, user.organization_id)
     db_user = models.User(
         name=user.name.strip(),
-        email=user.email.strip().lower(),
-        password=hashed_password,
+        email=email,
+        password=auth.hash_password(user.password),
         organization_id=user.organization_id,
-        role=role
+        role=role,
+        is_active=True,
+        created_at=utc_now_naive(),
     )
-
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
-
-    return {
-        "id": db_user.id,
-        "name": db_user.name,
-        "email": db_user.email,
-        "organization_id": db_user.organization_id,
-        "organization_name": organization_name,
-        "role": db_user.role
-    }
+    return serialize_user(db, db_user)
 
 
 @router.get("/", response_model=list[schemas.UserResponse])
 def list_users(
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(auth.require_permission("users_view"))
+    current_user: models.User = Depends(auth.require_permission("users_view")),
 ):
-    users = db.query(models.User).all()
-
-    result = []
-
-    for user in users:
-        organization_name = None
-
-        if user.organization_id:
-            organization = db.query(models.Organization).filter(
-                models.Organization.id == user.organization_id
-            ).first()
-
-            if organization:
-                organization_name = organization.name
-
-        result.append({
-            "id": user.id,
-            "name": user.name,
-            "email": user.email,
-            "organization_id": user.organization_id,
-            "organization_name": organization_name,
-            "role": user.role
-        })
-
-    return result
+    return [serialize_user(db, user) for user in db.query(models.User).order_by(models.User.id).all()]
 
 
 @router.post("/login")
-def login(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db)
-):
+def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = db.query(models.User).filter(
-        models.User.email == form_data.username
+        models.User.email == form_data.username.strip().lower()
     ).first()
-
-    if not user:
-        raise HTTPException(
-            status_code=401,
-            detail="Usuário não encontrado"
-        )
-
-    if not auth.verify_password(form_data.password, user.password):
-        raise HTTPException(
-            status_code=401,
-            detail="Senha inválida"
-        )
-
-    token = auth.create_token({"user_id": user.id})
-
-    return {
-        "access_token": token,
-        "token_type": "bearer"
-    }
+    if not user or not auth.verify_password(form_data.password, user.password):
+        raise HTTPException(status_code=401, detail="Credenciais inválidas")
+    if not user.is_active:
+        raise HTTPException(status_code=403, detail="Conta desativada. Contate o administrador")
+    return {"access_token": auth.create_token({"user_id": user.id}), "token_type": "bearer"}
 
 
 @router.put("/{user_id}", response_model=schemas.UserResponse)
@@ -159,92 +120,89 @@ def update_user(
     user_id: int,
     user_data: schemas.UserUpdate,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(auth.require_permission("users_edit"))
+    current_user: models.User = Depends(auth.require_permission("users_edit")),
 ):
-    user = db.query(models.User).filter(
-        models.User.id == user_id
-    ).first()
+    user = find_user(db, user_id)
+    email = user_data.email.strip().lower()
+    if not user_data.name.strip() or not email:
+        raise HTTPException(status_code=400, detail="Nome e e-mail são obrigatórios")
+    if db.query(models.User).filter(
+        models.User.email == email, models.User.id != user_id
+    ).first():
+        raise HTTPException(status_code=400, detail="E-mail já está em uso")
 
-    if not user:
-        raise HTTPException(
-            status_code=404,
-            detail="Usuário não encontrado"
-        )
+    new_role = validate_role(user_data.role)
+    if user.is_active and user.role == "admin" and new_role != "admin":
+        if count_active_admins(db) <= 1:
+            raise HTTPException(status_code=400, detail="Não é possível remover o último administrador ativo")
 
-    existing_email_user = db.query(models.User).filter(
-        models.User.email == user_data.email,
-        models.User.id != user_id
-    ).first()
+    if user.organization_id != user_data.organization_id:
+        if db.query(models.Finance).filter(models.Finance.user_id == user_id).first():
+            raise HTTPException(status_code=400, detail="Usuário com financeiro vinculado não pode mudar de organização")
 
-    if existing_email_user:
-        raise HTTPException(
-            status_code=400,
-            detail="Email já está em uso por outro usuário"
-        )
-
-    role = validate_role(user_data.role)
-
-    if user.role == "admin" and role != "admin":
-        total_admins = count_admin_users(db)
-
-        if total_admins <= 1:
-            raise HTTPException(
-                status_code=400,
-                detail="Não é possível remover o último administrador do sistema"
-            )
-
-    organization_name = get_organization_name(db, user_data.organization_id)
-
+    get_organization_name(db, user_data.organization_id)
     user.name = user_data.name.strip()
-    user.email = user_data.email.strip().lower()
+    user.email = email
+    user.role = new_role
     user.organization_id = user_data.organization_id
-    user.role = role
-
     db.commit()
     db.refresh(user)
+    return serialize_user(db, user)
 
-    return {
-        "id": user.id,
-        "name": user.name,
-        "email": user.email,
-        "organization_id": user.organization_id,
-        "organization_name": organization_name,
-        "role": user.role
-    }
+
+@router.patch("/{user_id}/deactivate", response_model=schemas.UserResponse)
+def deactivate_user(
+    user_id: int,
+    data: schemas.UserDeactivationRequest,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.require_permission("users_edit")),
+):
+    user = find_user(db, user_id)
+    if user.id == current_user.id:
+        raise HTTPException(status_code=400, detail="Você não pode desativar a própria conta")
+    if not user.is_active:
+        raise HTTPException(status_code=400, detail="Usuário já está desativado")
+    reason = data.reason.strip()
+    if len(reason) < 3:
+        raise HTTPException(status_code=400, detail="Informe um motivo com pelo menos 3 caracteres")
+    if user.role == "admin" and count_active_admins(db) <= 1:
+        raise HTTPException(status_code=400, detail="Não é possível desativar o último administrador ativo")
+
+    user.is_active = False
+    user.deactivated_at = utc_now_naive()
+    user.deactivation_reason = reason
+    db.commit()
+    db.refresh(user)
+    return serialize_user(db, user)
+
+
+@router.patch("/{user_id}/reactivate", response_model=schemas.UserResponse)
+def reactivate_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(auth.require_permission("users_edit")),
+):
+    user = find_user(db, user_id)
+    if user.is_active:
+        raise HTTPException(status_code=400, detail="Usuário já está ativo")
+    user.is_active = True
+    # Mantemos a última data e motivo de desativação, mesmo após reativação,
+    # para não apagar as informações históricas. Para múltiplos ciclos seria
+    # necessária uma tabela separada de histórico de status.
+    db.commit()
+    db.refresh(user)
+    return serialize_user(db, user)
 
 
 @router.delete("/{user_id}")
 def delete_user(
     user_id: int,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(auth.require_permission("users_delete"))
+    current_user: models.User = Depends(auth.require_permission("users_delete")),
 ):
-    if current_user.id == user_id:
-        raise HTTPException(
-            status_code=400,
-            detail="Você não pode excluir o próprio usuário logado"
-        )
-
-    user = db.query(models.User).filter(
-        models.User.id == user_id
-    ).first()
-
-    if not user:
-        raise HTTPException(
-            status_code=404,
-            detail="Usuário não encontrado"
-        )
-
-    if user.role == "admin":
-        total_admins = count_admin_users(db)
-
-        if total_admins <= 1:
-            raise HTTPException(
-                status_code=400,
-                detail="Não é possível excluir o último administrador do sistema"
-            )
-
-    db.delete(user)
-    db.commit()
-
-    return {"message": "Usuário excluído com sucesso"}
+    # Exclusão física desabilitada por decisão de preservação do histórico.
+    find_user(db, user_id)
+    raise HTTPException(
+        status_code=409,
+        detail="Exclusão definitiva desabilitada. Utilize a desativação para preservar o histórico.",
+    )
