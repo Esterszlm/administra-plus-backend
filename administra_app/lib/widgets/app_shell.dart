@@ -7,6 +7,13 @@ class AppShell extends StatelessWidget {
   final Widget child;
   final Function(int) onSelectPage;
   final VoidCallback onLogout;
+  final String userName;
+  final String userEmail;
+  final String userRole;
+  final String apiStatus;
+  final bool apiVerified;
+  final bool checkingApi;
+  final VoidCallback onRefreshApi;
 
   const AppShell({
     super.key,
@@ -15,6 +22,13 @@ class AppShell extends StatelessWidget {
     required this.child,
     required this.onSelectPage,
     required this.onLogout,
+    required this.userName,
+    required this.userEmail,
+    required this.userRole,
+    required this.apiStatus,
+    required this.apiVerified,
+    required this.checkingApi,
+    required this.onRefreshApi,
   });
 
   Widget _menuItem({
@@ -61,9 +75,7 @@ class AppShell extends StatelessWidget {
       width: 270,
       decoration: const BoxDecoration(
         color: AppColors.surface,
-        border: Border(
-          right: BorderSide(color: AppColors.border),
-        ),
+        border: Border(right: BorderSide(color: AppColors.border)),
       ),
       child: Column(
         children: [
@@ -71,9 +83,7 @@ class AppShell extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(22, 26, 22, 22),
             decoration: const BoxDecoration(
-              border: Border(
-                bottom: BorderSide(color: AppColors.border),
-              ),
+              border: Border(bottom: BorderSide(color: AppColors.border)),
             ),
             child: Row(
               children: [
@@ -138,11 +148,7 @@ class AppShell extends StatelessWidget {
             title: 'Financeiro',
             index: 3,
           ),
-          _menuItem(
-            icon: Icons.people_outline,
-            title: 'Usuários',
-            index: 4,
-          ),
+          _menuItem(icon: Icons.people_outline, title: 'Usuários', index: 4),
           const Spacer(),
           Container(
             margin: const EdgeInsets.all(14),
@@ -152,16 +158,12 @@ class AppShell extends StatelessWidget {
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: AppColors.border),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                CircleAvatar(
+                const CircleAvatar(
                   radius: 18,
                   backgroundColor: AppColors.primaryLight,
-                  child: Icon(
-                    Icons.person,
-                    color: AppColors.primary,
-                    size: 20,
-                  ),
+                  child: Icon(Icons.person, color: AppColors.primary, size: 20),
                 ),
                 SizedBox(width: 10),
                 Expanded(
@@ -169,8 +171,10 @@ class AppShell extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Administrador',
-                        style: TextStyle(
+                        userName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
                           color: AppColors.textPrimary,
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
@@ -178,10 +182,23 @@ class AppShell extends StatelessWidget {
                       ),
                       SizedBox(height: 2),
                       Text(
-                        'admin@email.com',
-                        style: TextStyle(
+                        userEmail,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 11,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        userRole,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppColors.primary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
@@ -202,11 +219,7 @@ class AppShell extends StatelessWidget {
               ),
               child: const Row(
                 children: [
-                  Icon(
-                    Icons.logout,
-                    color: AppColors.danger,
-                    size: 22,
-                  ),
+                  Icon(Icons.logout, color: AppColors.danger, size: 22),
                   SizedBox(width: 12),
                   Text(
                     'Sair do sistema',
@@ -231,9 +244,7 @@ class AppShell extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 28),
       decoration: const BoxDecoration(
         color: AppColors.surface,
-        border: Border(
-          bottom: BorderSide(color: AppColors.border),
-        ),
+        border: Border(bottom: BorderSide(color: AppColors.border)),
       ),
       child: Row(
         children: [
@@ -262,30 +273,58 @@ class AppShell extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceSoft,
+          Tooltip(
+            message: checkingApi
+                ? 'Verificando a API...'
+                : 'Clique para verificar novamente a API e sua sessão',
+            child: InkWell(
+              onTap: checkingApi ? null : onRefreshApi,
               borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: const Row(
-              children: [
-                Icon(
-                  Icons.circle,
-                  size: 9,
-                  color: AppColors.success,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
                 ),
-                SizedBox(width: 8),
-                Text(
-                  'API conectada',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceSoft,
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: AppColors.border),
                 ),
-              ],
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (checkingApi)
+                      const SizedBox(
+                        width: 12,
+                        height: 12,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    else
+                      Icon(
+                        Icons.circle,
+                        size: 9,
+                        color: apiVerified
+                            ? AppColors.success
+                            : AppColors.danger,
+                      ),
+                    const SizedBox(width: 8),
+                    Text(
+                      apiStatus,
+                      style: const TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(width: 7),
+                    const Icon(
+                      Icons.refresh,
+                      size: 15,
+                      color: AppColors.textSecondary,
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ],
@@ -304,9 +343,7 @@ class AppShell extends StatelessWidget {
             child: Column(
               children: [
                 _topbar(),
-                Expanded(
-                  child: child,
-                ),
+                Expanded(child: child),
               ],
             ),
           ),
