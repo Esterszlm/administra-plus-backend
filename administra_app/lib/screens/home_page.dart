@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../core/access_scope.dart';
 import '../services/api_service.dart';
 import '../widgets/app_shell.dart';
 import 'dashboard_page.dart';
@@ -28,6 +29,9 @@ class _HomePageState extends State<HomePage> {
   bool _checkingApi = false;
   bool _apiVerified = false;
   String _apiStatus = 'Verificação pendente';
+  bool _permissionsLoaded = false;
+  Set<String> _permissions = <String>{};
+  Set<int> _allowedPages = <int>{};
 
   @override
   void initState() {
@@ -35,13 +39,13 @@ class _HomePageState extends State<HomePage> {
     _verifySession();
   }
 
-  // A própria API confirma quem está autenticado. Não usamos
-  // nome ou e-mail fixos na interface.
+  // Valida a identidade e carrega as permissões efetivas do servidor.
+  // Enquanto não obtivermos as permissões, nenhuma página é carregada.
   Future<void> _verifySession() async {
     if (_checkingApi) return;
-
     setState(() {
       _checkingApi = true;
+      _permissionsLoaded = false;
       _apiStatus = 'Verificando API';
     });
 
@@ -54,40 +58,67 @@ class _HomePageState extends State<HomePage> {
           )
           .timeout(const Duration(seconds: 8));
 
-      if (!mounted) return;
-
-      if (response.statusCode == 200) {
-        final decoded = jsonDecode(utf8.decode(response.bodyBytes));
-
-        if (decoded is! Map<String, dynamic>) {
-          throw const FormatException('Resposta inválida de /me');
-        }
-
+      if (response.statusCode != 200) {
+        if (!mounted) return;
         setState(() {
-          _currentUser = decoded;
-          _apiVerified = true;
-          _apiStatus = 'API verificada';
-        });
-      } else {
-        setState(() {
-          _currentUser = null;
           _apiVerified = false;
+          _currentUser = null;
+          _allowedPages = <int>{};
           _apiStatus = response.statusCode == 401
               ? 'Sessão inválida'
               : 'Erro HTTP ${response.statusCode}';
         });
+        return;
       }
+
+      final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+      if (decoded is! Map<String, dynamic>) {
+        throw const FormatException('Resposta inválida de /me');
+      }
+
+      final access = await apiService.getMyPermissions();
+      final raw = access['permissions'];
+      if (raw is! List) {
+        throw const FormatException('Resposta inválida de /permissions/me');
+      }
+      final permissions = raw.map((item) => item.toString()).toSet();
+      final isAdmin = decoded['role'] == 'admin';
+      final allowed = <int>{};
+      const modules = [
+        'dashboard',
+        'organizations',
+        'events',
+        'finance',
+        'users',
+      ];
+      for (var index = 0; index < modules.length; index++) {
+        if (isAdmin || permissions.contains('${modules[index]}_view')) {
+          allowed.add(index);
+        }
+      }
+      if (!mounted) return;
+      setState(() {
+        _currentUser = decoded;
+        _permissions = permissions;
+        _allowedPages = allowed;
+        _permissionsLoaded = true;
+        _apiVerified = true;
+        _apiStatus = 'API verificada';
+        if (!allowed.contains(selectedPage)) {
+          selectedPage = allowed.isEmpty ? -1 : allowed.first;
+        }
+      });
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _currentUser = null;
         _apiVerified = false;
-        _apiStatus = 'Sem conexão';
+        _permissionsLoaded = false;
+        _permissions = <String>{};
+        _allowedPages = <int>{};
+        _apiStatus = 'Falha ao verificar acesso';
       });
     } finally {
-      if (mounted) {
-        setState(() => _checkingApi = false);
-      }
+      if (mounted) setState(() => _checkingApi = false);
     }
   }
 
@@ -125,7 +156,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   void selectPage(int index) {
-    if (index < 0 || index >= titles.length) return;
+    if (index < 0 || index >= titles.length || !_allowedPages.contains(index)) {
+      return;
+    }
 
     setState(() {
       selectedPage = index;
@@ -140,6 +173,24 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget currentPage() {
+    if (_checkingApi || !_permissionsLoaded) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_allowedPages.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Text(
+            'Seu usuário ainda não possui módulos liberados. '
+            'Peça ao administrador para configurar suas permissões.',
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+    if (!_allowedPages.contains(selectedPage)) {
+      return const Center(child: Text('Acesso não autorizado.'));
+    }
     if (selectedPage == 0) {
       return DashboardPage(apiService: apiService);
     }
@@ -153,17 +204,26 @@ class _HomePageState extends State<HomePage> {
     }
 
     if (selectedPage == 3) {
-      return FinancePage(apiService: apiService);
+      return FinancePage(
+        apiService: apiService,
+        isAdmin: _currentUser?['role'] == 'admin',
+        permissions: _permissions,
+      );
     }
 
-    return UsersPage(apiService: apiService);
+    return UsersPage(
+      apiService: apiService,
+      isAdmin: _currentUser?['role'] == 'admin',
+      permissions: _permissions,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return AppShell(
       selectedIndex: selectedPage,
-      title: titles[selectedPage],
+      title: selectedPage < 0 ? 'Acesso restrito' : titles[selectedPage],
+      allowedPages: _allowedPages,
       onSelectPage: selectPage,
       onLogout: logout,
       userName: _userName,
@@ -173,7 +233,11 @@ class _HomePageState extends State<HomePage> {
       apiVerified: _apiVerified,
       checkingApi: _checkingApi,
       onRefreshApi: _verifySession,
-      child: currentPage(),
+      child: AccessScope(
+        isAdmin: _currentUser?['role'] == 'admin',
+        permissions: _permissions,
+        child: currentPage(),
+      ),
     );
   }
 }

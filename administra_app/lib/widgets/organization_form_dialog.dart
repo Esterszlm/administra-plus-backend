@@ -11,7 +11,8 @@ class OrganizationFormDialog extends StatefulWidget {
     required String city,
     required String state,
     required String responsibleName,
-  }) onSubmit;
+  })
+  onSubmit;
 
   const OrganizationFormDialog({
     super.key,
@@ -134,9 +135,7 @@ class _OrganizationFormDialogState extends State<OrganizationFormDialog> {
       controller: controller,
       maxLines: maxLines,
       validator: requiredField,
-      decoration: InputDecoration(
-        labelText: label,
-      ),
+      decoration: InputDecoration(labelText: label),
     );
   }
 
@@ -144,9 +143,7 @@ class _OrganizationFormDialogState extends State<OrganizationFormDialog> {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: AppColors.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(22),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
       child: SizedBox(
         width: 720,
         child: SingleChildScrollView(
@@ -190,15 +187,15 @@ class _OrganizationFormDialogState extends State<OrganizationFormDialog> {
                             const SizedBox(height: 4),
                             const Text(
                               'Preencha os dados administrativos da organização.',
-                              style: TextStyle(
-                                color: AppColors.textSecondary,
-                              ),
+                              style: TextStyle(color: AppColors.textSecondary),
                             ),
                           ],
                         ),
                       ),
                       IconButton(
-                        onPressed: loading ? null : () => Navigator.pop(context),
+                        onPressed: loading
+                            ? null
+                            : () => Navigator.pop(context),
                         icon: const Icon(Icons.close),
                       ),
                     ],
@@ -214,10 +211,7 @@ class _OrganizationFormDialogState extends State<OrganizationFormDialog> {
                       ),
                       const SizedBox(width: 16),
                       Expanded(
-                        child: field(
-                          label: 'Tipo',
-                          controller: typeController,
-                        ),
+                        child: field(label: 'Tipo', controller: typeController),
                       ),
                     ],
                   ),
@@ -240,10 +234,7 @@ class _OrganizationFormDialogState extends State<OrganizationFormDialog> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  field(
-                    label: 'Endereço',
-                    controller: addressController,
-                  ),
+                  field(label: 'Endereço', controller: addressController),
                   const SizedBox(height: 16),
                   Row(
                     children: [
@@ -285,7 +276,9 @@ class _OrganizationFormDialogState extends State<OrganizationFormDialog> {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       OutlinedButton(
-                        onPressed: loading ? null : () => Navigator.pop(context),
+                        onPressed: loading
+                            ? null
+                            : () => Navigator.pop(context),
                         child: const Text('Cancelar'),
                       ),
                       const SizedBox(width: 12),

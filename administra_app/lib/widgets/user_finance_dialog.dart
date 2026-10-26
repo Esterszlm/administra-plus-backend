@@ -78,9 +78,9 @@ class _UserFinanceDialogState extends State<UserFinanceDialog> {
   Widget _content(Map<String, dynamic> data) {
     final entries = (data['lancamentos'] is List)
         ? (data['lancamentos'] as List)
-            .whereType<Map>()
-            .map((e) => Map<String, dynamic>.from(e))
-            .toList()
+              .whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList()
         : <Map<String, dynamic>>[];
 
     return SingleChildScrollView(
@@ -92,8 +92,16 @@ class _UserFinanceDialogState extends State<UserFinanceDialog> {
             spacing: 12,
             runSpacing: 12,
             children: [
-              _totalCard('Total de entradas', data['total_entradas'], AppColors.success),
-              _totalCard('Total de saídas', data['total_saidas'], AppColors.danger),
+              _totalCard(
+                'Total de entradas',
+                data['total_entradas'],
+                AppColors.success,
+              ),
+              _totalCard(
+                'Total de saídas',
+                data['total_saidas'],
+                AppColors.danger,
+              ),
               _totalCard('Saldo individual', data['saldo'], AppColors.primary),
             ],
           ),
@@ -130,18 +138,26 @@ class _UserFinanceDialogState extends State<UserFinanceDialog> {
                 ],
                 rows: entries.map((entry) {
                   final isIncome = entry['type'] == 'entrada';
-                  return DataRow(cells: [
-                    DataCell(Text(_date(entry['date']))),
-                    DataCell(Text(entry['description']?.toString() ?? '-')),
-                    DataCell(Text(isIncome ? 'Entrada' : 'Saída')),
-                    DataCell(Text(
-                      formatarValor(entry['amount']),
-                      style: TextStyle(
-                        color: isIncome ? AppColors.success : AppColors.danger,
+                  return DataRow(
+                    cells: [
+                      DataCell(Text(_date(entry['date']))),
+                      DataCell(Text(entry['description']?.toString() ?? '-')),
+                      DataCell(Text(isIncome ? 'Entrada' : 'Saída')),
+                      DataCell(
+                        Text(
+                          formatarValor(entry['amount']),
+                          style: TextStyle(
+                            color: isIncome
+                                ? AppColors.success
+                                : AppColors.danger,
+                          ),
+                        ),
                       ),
-                    )),
-                    DataCell(Text(entry['organization_name']?.toString() ?? '-')),
-                  ]);
+                      DataCell(
+                        Text(entry['organization_name']?.toString() ?? '-'),
+                      ),
+                    ],
+                  );
                 }).toList(),
               ),
             ),
@@ -218,10 +234,16 @@ class _UserFinanceDialogState extends State<UserFinanceDialog> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.error_outline, color: AppColors.danger),
+                            const Icon(
+                              Icons.error_outline,
+                              color: AppColors.danger,
+                            ),
                             const SizedBox(height: 10),
                             Text(
-                              snapshot.error.toString().replaceFirst('Exception: ', ''),
+                              snapshot.error.toString().replaceFirst(
+                                'Exception: ',
+                                '',
+                              ),
                               textAlign: TextAlign.center,
                               style: const TextStyle(color: AppColors.danger),
                             ),

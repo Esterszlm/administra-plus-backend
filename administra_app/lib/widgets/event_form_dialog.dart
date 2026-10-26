@@ -11,7 +11,8 @@ class EventFormDialog extends StatefulWidget {
     required String date,
     required String location,
     required int organizationId,
-  }) onSubmit;
+  })
+  onSubmit;
 
   const EventFormDialog({
     super.key,
@@ -140,10 +141,7 @@ class _EventFormDialogState extends State<EventFormDialog> {
       controller: controller,
       maxLines: maxLines,
       validator: requiredField,
-      decoration: InputDecoration(
-        labelText: label,
-        helperText: helperText,
-      ),
+      decoration: InputDecoration(labelText: label, helperText: helperText),
     );
   }
 
@@ -151,9 +149,7 @@ class _EventFormDialogState extends State<EventFormDialog> {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: AppColors.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(22),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
       child: SizedBox(
         width: 760,
         child: SingleChildScrollView(
@@ -195,24 +191,21 @@ class _EventFormDialogState extends State<EventFormDialog> {
                             const SizedBox(height: 4),
                             const Text(
                               'Preencha os dados do evento e vincule a uma organização.',
-                              style: TextStyle(
-                                color: AppColors.textSecondary,
-                              ),
+                              style: TextStyle(color: AppColors.textSecondary),
                             ),
                           ],
                         ),
                       ),
                       IconButton(
-                        onPressed: loading ? null : () => Navigator.pop(context),
+                        onPressed: loading
+                            ? null
+                            : () => Navigator.pop(context),
                         icon: const Icon(Icons.close),
                       ),
                     ],
                   ),
                   const SizedBox(height: 24),
-                  field(
-                    label: 'Título do evento',
-                    controller: titleController,
-                  ),
+                  field(label: 'Título do evento', controller: titleController),
                   const SizedBox(height: 16),
                   Row(
                     children: [
@@ -235,9 +228,7 @@ class _EventFormDialogState extends State<EventFormDialog> {
                   const SizedBox(height: 16),
                   DropdownButtonFormField<int>(
                     value: selectedOrganizationId,
-                    decoration: const InputDecoration(
-                      labelText: 'Organização',
-                    ),
+                    decoration: const InputDecoration(labelText: 'Organização'),
                     items: widget.organizations.map((organization) {
                       final id = int.tryParse(organization['id'].toString());
 
@@ -289,7 +280,9 @@ class _EventFormDialogState extends State<EventFormDialog> {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       OutlinedButton(
-                        onPressed: loading ? null : () => Navigator.pop(context),
+                        onPressed: loading
+                            ? null
+                            : () => Navigator.pop(context),
                         child: const Text('Cancelar'),
                       ),
                       const SizedBox(width: 12),

@@ -79,6 +79,12 @@ def create_user(
     if db.query(models.User).filter(models.User.email == email).first():
         raise HTTPException(status_code=400, detail="E-mail já cadastrado")
     role = validate_role(user.role)
+    # Permissão users_create não autoriza promover ninguém a administrador.
+    if current_user.role != "admin":
+        if role != "viewer":
+            raise HTTPException(status_code=403, detail="Somente administradores criam administradores")
+        if current_user.organization_id is None or user.organization_id != current_user.organization_id:
+            raise HTTPException(status_code=403, detail="Organização não autorizada")
     get_organization_name(db, user.organization_id)
     db_user = models.User(
         name=user.name.strip(),
@@ -100,7 +106,14 @@ def list_users(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.require_permission("users_view")),
 ):
-    return [serialize_user(db, user) for user in db.query(models.User).order_by(models.User.id).all()]
+    query = db.query(models.User)
+    if current_user.role != "admin":
+        # Não expor todos os usuários de outras organizações.
+        if current_user.organization_id is None:
+            query = query.filter(models.User.id == current_user.id)
+        else:
+            query = query.filter(models.User.organization_id == current_user.organization_id)
+    return [serialize_user(db, user) for user in query.order_by(models.User.id).all()]
 
 
 @router.post("/login")
@@ -132,6 +145,14 @@ def update_user(
         raise HTTPException(status_code=400, detail="E-mail já está em uso")
 
     new_role = validate_role(user_data.role)
+    if current_user.role != "admin":
+        # Impede elevação de privilégio por quem possui users_edit.
+        if user.role != "viewer" or new_role != "viewer":
+            raise HTTPException(status_code=403, detail="Somente administradores alteram perfis administrativos")
+        if (current_user.organization_id is None
+                or user.organization_id != current_user.organization_id
+                or user_data.organization_id != current_user.organization_id):
+            raise HTTPException(status_code=403, detail="Organização não autorizada")
     if user.is_active and user.role == "admin" and new_role != "admin":
         if count_active_admins(db) <= 1:
             raise HTTPException(status_code=400, detail="Não é possível remover o último administrador ativo")
@@ -157,6 +178,8 @@ def deactivate_user(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.require_permission("users_edit")),
 ):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Somente administradores podem ativar ou desativar usuários")
     user = find_user(db, user_id)
     if user.id == current_user.id:
         raise HTTPException(status_code=400, detail="Você não pode desativar a própria conta")
@@ -182,6 +205,8 @@ def reactivate_user(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.require_permission("users_edit")),
 ):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Somente administradores podem ativar ou desativar usuários")
     user = find_user(db, user_id)
     if user.is_active:
         raise HTTPException(status_code=400, detail="Usuário já está ativo")

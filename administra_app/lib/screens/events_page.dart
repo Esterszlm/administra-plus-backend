@@ -7,10 +7,7 @@ import '../widgets/event_form_dialog.dart';
 class EventsPage extends StatefulWidget {
   final ApiService apiService;
 
-  const EventsPage({
-    super.key,
-    required this.apiService,
-  });
+  const EventsPage({super.key, required this.apiService});
 
   @override
   State<EventsPage> createState() => _EventsPageState();
@@ -48,9 +45,7 @@ class _EventsPageState extends State<EventsPage> {
   }
 
   void showSuccess(String text) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(text)),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
   }
 
   Future<void> openCreateDialog() async {
@@ -60,21 +55,22 @@ class _EventsPageState extends State<EventsPage> {
       builder: (_) {
         return EventFormDialog(
           organizations: organizations,
-          onSubmit: ({
-            required String title,
-            required String description,
-            required String date,
-            required String location,
-            required int organizationId,
-          }) async {
-            await widget.apiService.createEvent(
-              title: title,
-              description: description,
-              date: date,
-              location: location,
-              organizationId: organizationId,
-            );
-          },
+          onSubmit:
+              ({
+                required String title,
+                required String description,
+                required String date,
+                required String location,
+                required int organizationId,
+              }) async {
+                await widget.apiService.createEvent(
+                  title: title,
+                  description: description,
+                  date: date,
+                  location: location,
+                  organizationId: organizationId,
+                );
+              },
         );
       },
     );
@@ -100,22 +96,23 @@ class _EventsPageState extends State<EventsPage> {
         return EventFormDialog(
           event: event,
           organizations: organizations,
-          onSubmit: ({
-            required String title,
-            required String description,
-            required String date,
-            required String location,
-            required int organizationId,
-          }) async {
-            await widget.apiService.updateEvent(
-              id: id,
-              title: title,
-              description: description,
-              date: date,
-              location: location,
-              organizationId: organizationId,
-            );
-          },
+          onSubmit:
+              ({
+                required String title,
+                required String description,
+                required String date,
+                required String location,
+                required int organizationId,
+              }) async {
+                await widget.apiService.updateEvent(
+                  id: id,
+                  title: title,
+                  description: description,
+                  date: date,
+                  location: location,
+                  organizationId: organizationId,
+                );
+              },
         );
       },
     );
@@ -141,9 +138,7 @@ class _EventsPageState extends State<EventsPage> {
       builder: (_) {
         return AlertDialog(
           title: const Text('Excluir evento'),
-          content: Text(
-            'Tem certeza que deseja excluir o evento "$title"?',
-          ),
+          content: Text('Tem certeza que deseja excluir o evento "$title"?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -165,9 +160,7 @@ class _EventsPageState extends State<EventsPage> {
         showSuccess('Evento excluído com sucesso.');
         await loadData();
       } catch (e) {
-        showSuccess(
-          e.toString().replaceAll('Exception: ', ''),
-        );
+        showSuccess(e.toString().replaceAll('Exception: ', ''));
       }
     }
   }
@@ -205,9 +198,7 @@ class _EventsPageState extends State<EventsPage> {
             DataCell(Text(texto(item['location']))),
             DataCell(Text(formatarData(item['date']))),
             DataCell(
-              Text(
-                texto(item['organization_name'] ?? item['organization_id']),
-              ),
+              Text(texto(item['organization_name'] ?? item['organization_id'])),
             ),
             DataCell(
               SizedBox(
@@ -225,18 +216,14 @@ class _EventsPageState extends State<EventsPage> {
                     tooltip: 'Editar',
                     icon: const Icon(Icons.edit),
                     onPressed: () {
-                      openEditDialog(
-                        Map<String, dynamic>.from(item),
-                      );
+                      openEditDialog(Map<String, dynamic>.from(item));
                     },
                   ),
                   IconButton(
                     tooltip: 'Excluir',
                     icon: const Icon(Icons.delete_outline),
                     onPressed: () {
-                      confirmDelete(
-                        Map<String, dynamic>.from(item),
-                      );
+                      confirmDelete(Map<String, dynamic>.from(item));
                     },
                   ),
                 ],

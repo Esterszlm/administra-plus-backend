@@ -7,10 +7,7 @@ import '../widgets/organization_form_dialog.dart';
 class OrganizationsPage extends StatefulWidget {
   final ApiService apiService;
 
-  const OrganizationsPage({
-    super.key,
-    required this.apiService,
-  });
+  const OrganizationsPage({super.key, required this.apiService});
 
   @override
   State<OrganizationsPage> createState() => _OrganizationsPageState();
@@ -45,9 +42,7 @@ class _OrganizationsPageState extends State<OrganizationsPage> {
   }
 
   void showSuccess(String text) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(text)),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
   }
 
   Future<void> openCreateDialog() async {
@@ -56,25 +51,26 @@ class _OrganizationsPageState extends State<OrganizationsPage> {
       barrierDismissible: false,
       builder: (_) {
         return OrganizationFormDialog(
-          onSubmit: ({
-            required String name,
-            required String type,
-            required String document,
-            required String address,
-            required String city,
-            required String state,
-            required String responsibleName,
-          }) async {
-            await widget.apiService.createOrganization(
-              name: name,
-              type: type,
-              document: document,
-              address: address,
-              city: city,
-              state: state,
-              responsibleName: responsibleName,
-            );
-          },
+          onSubmit:
+              ({
+                required String name,
+                required String type,
+                required String document,
+                required String address,
+                required String city,
+                required String state,
+                required String responsibleName,
+              }) async {
+                await widget.apiService.createOrganization(
+                  name: name,
+                  type: type,
+                  document: document,
+                  address: address,
+                  city: city,
+                  state: state,
+                  responsibleName: responsibleName,
+                );
+              },
         );
       },
     );
@@ -99,26 +95,27 @@ class _OrganizationsPageState extends State<OrganizationsPage> {
       builder: (_) {
         return OrganizationFormDialog(
           organization: organization,
-          onSubmit: ({
-            required String name,
-            required String type,
-            required String document,
-            required String address,
-            required String city,
-            required String state,
-            required String responsibleName,
-          }) async {
-            await widget.apiService.updateOrganization(
-              id: id,
-              name: name,
-              type: type,
-              document: document,
-              address: address,
-              city: city,
-              state: state,
-              responsibleName: responsibleName,
-            );
-          },
+          onSubmit:
+              ({
+                required String name,
+                required String type,
+                required String document,
+                required String address,
+                required String city,
+                required String state,
+                required String responsibleName,
+              }) async {
+                await widget.apiService.updateOrganization(
+                  id: id,
+                  name: name,
+                  type: type,
+                  document: document,
+                  address: address,
+                  city: city,
+                  state: state,
+                  responsibleName: responsibleName,
+                );
+              },
         );
       },
     );
@@ -168,9 +165,7 @@ class _OrganizationsPageState extends State<OrganizationsPage> {
         showSuccess('Organização excluída com sucesso.');
         await loadOrganizations();
       } catch (e) {
-        showSuccess(
-          e.toString().replaceAll('Exception: ', ''),
-        );
+        showSuccess(e.toString().replaceAll('Exception: ', ''));
       }
     }
   }
@@ -218,18 +213,14 @@ class _OrganizationsPageState extends State<OrganizationsPage> {
                     tooltip: 'Editar',
                     icon: const Icon(Icons.edit),
                     onPressed: () {
-                      openEditDialog(
-                        Map<String, dynamic>.from(item),
-                      );
+                      openEditDialog(Map<String, dynamic>.from(item));
                     },
                   ),
                   IconButton(
                     tooltip: 'Excluir',
                     icon: const Icon(Icons.delete_outline),
                     onPressed: () {
-                      confirmDelete(
-                        Map<String, dynamic>.from(item),
-                      );
+                      confirmDelete(Map<String, dynamic>.from(item));
                     },
                   ),
                 ],

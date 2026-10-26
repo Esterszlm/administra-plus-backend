@@ -10,7 +10,8 @@ class UserFormDialog extends StatefulWidget {
     required String password,
     required String role,
     int? organizationId,
-  }) onSubmit;
+  })
+  onSubmit;
 
   const UserFormDialog({
     super.key,
@@ -178,18 +179,14 @@ class _UserFormDialogState extends State<UserFormDialog> {
                 TextFormField(
                   controller: _nameController,
                   validator: _validateRequired,
-                  decoration: const InputDecoration(
-                    labelText: 'Nome completo',
-                  ),
+                  decoration: const InputDecoration(labelText: 'Nome completo'),
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _emailController,
                   validator: _validateEmail,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: 'E-mail',
-                  ),
+                  decoration: const InputDecoration(labelText: 'E-mail'),
                 ),
                 if (!_isEditing) ...[
                   const SizedBox(height: 16),
@@ -241,9 +238,7 @@ class _UserFormDialogState extends State<UserFormDialog> {
                 DropdownButtonFormField<int>(
                   initialValue: _organizationId,
                   isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Organização',
-                  ),
+                  decoration: const InputDecoration(labelText: 'Organização'),
                   items: [
                     const DropdownMenuItem<int>(
                       value: -1,

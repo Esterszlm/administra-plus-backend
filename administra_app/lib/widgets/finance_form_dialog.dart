@@ -12,7 +12,8 @@ class FinanceFormDialog extends StatefulWidget {
     required String description,
     required int organizationId,
     int? userId,
-  }) onSubmit;
+  })
+  onSubmit;
 
   const FinanceFormDialog({
     super.key,
@@ -48,11 +49,13 @@ class _FinanceFormDialogState extends State<FinanceFormDialog> {
     return widget.users
         .whereType<Map>()
         .map((value) => Map<String, dynamic>.from(value))
-        .where((user) =>
-            selectedOrganizationId != null &&
-            _intValue(user['organization_id']) == selectedOrganizationId &&
-            (user['is_active'] != false ||
-             _intValue(user['id']) == selectedUserId))
+        .where(
+          (user) =>
+              selectedOrganizationId != null &&
+              _intValue(user['organization_id']) == selectedOrganizationId &&
+              (user['is_active'] != false ||
+                  _intValue(user['id']) == selectedUserId),
+        )
         .toList();
   }
 
@@ -75,8 +78,7 @@ class _FinanceFormDialogState extends State<FinanceFormDialog> {
 
     selectedOrganizationId = _intValue(finance?['organization_id']);
     if (selectedOrganizationId == null && widget.organizations.isNotEmpty) {
-      selectedOrganizationId =
-          _intValue(widget.organizations.first['id']);
+      selectedOrganizationId = _intValue(widget.organizations.first['id']);
     }
 
     final existingUserId = _intValue(finance?['user_id']);
@@ -151,9 +153,7 @@ class _FinanceFormDialogState extends State<FinanceFormDialog> {
 
     return Dialog(
       backgroundColor: AppColors.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(22),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 720),
         child: SingleChildScrollView(
@@ -197,15 +197,15 @@ class _FinanceFormDialogState extends State<FinanceFormDialog> {
                             const SizedBox(height: 4),
                             const Text(
                               'Registre entradas e saídas por organização e, opcionalmente, por usuário.',
-                              style: TextStyle(
-                                color: AppColors.textSecondary,
-                              ),
+                              style: TextStyle(color: AppColors.textSecondary),
                             ),
                           ],
                         ),
                       ),
                       IconButton(
-                        onPressed: loading ? null : () => Navigator.pop(context),
+                        onPressed: loading
+                            ? null
+                            : () => Navigator.pop(context),
                         icon: const Icon(Icons.close),
                       ),
                     ],
@@ -261,9 +261,7 @@ class _FinanceFormDialogState extends State<FinanceFormDialog> {
                   DropdownButtonFormField<int>(
                     initialValue: selectedOrganizationId,
                     isExpanded: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Organização',
-                    ),
+                    decoration: const InputDecoration(labelText: 'Organização'),
                     items: widget.organizations.map((organization) {
                       return DropdownMenuItem<int>(
                         value: _intValue(organization['id']),
@@ -283,9 +281,8 @@ class _FinanceFormDialogState extends State<FinanceFormDialog> {
                               selectedUserId = -1;
                             });
                           },
-                    validator: (value) => value == null
-                        ? 'Selecione uma organização'
-                        : null,
+                    validator: (value) =>
+                        value == null ? 'Selecione uma organização' : null,
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<int>(
@@ -307,17 +304,21 @@ class _FinanceFormDialogState extends State<FinanceFormDialog> {
                           ))
                         DropdownMenuItem<int>(
                           value: selectedUserId,
-                          child: Text('Usuário #$selectedUserId (vínculo atual)'),
+                          child: Text(
+                            'Usuário #$selectedUserId (vínculo atual)',
+                          ),
                         ),
-                      ...availableUsers.map((user) => DropdownMenuItem<int>(
-                            value: _intValue(user['id']),
-                            child: Text(
-                              user['is_active'] == false
-                                  ? '${texto(user['name'])} (desativado - vínculo anterior)'
-                                  : texto(user['name']),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          )),
+                      ...availableUsers.map(
+                        (user) => DropdownMenuItem<int>(
+                          value: _intValue(user['id']),
+                          child: Text(
+                            user['is_active'] == false
+                                ? '${texto(user['name'])} (desativado - vínculo anterior)'
+                                : texto(user['name']),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
                     ],
                     onChanged: loading
                         ? null
@@ -359,7 +360,9 @@ class _FinanceFormDialogState extends State<FinanceFormDialog> {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       OutlinedButton(
-                        onPressed: loading ? null : () => Navigator.pop(context),
+                        onPressed: loading
+                            ? null
+                            : () => Navigator.pop(context),
                         child: const Text('Cancelar'),
                       ),
                       const SizedBox(width: 12),
@@ -375,7 +378,9 @@ class _FinanceFormDialogState extends State<FinanceFormDialog> {
                                 ),
                               )
                             : const Icon(Icons.save),
-                        label: Text(isEditing ? 'Salvar alterações' : 'Cadastrar'),
+                        label: Text(
+                          isEditing ? 'Salvar alterações' : 'Cadastrar',
+                        ),
                       ),
                     ],
                   ),

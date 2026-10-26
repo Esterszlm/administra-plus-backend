@@ -1,4 +1,3 @@
-
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -6,10 +5,7 @@ class ApiService {
   final String baseUrl;
   final String? token;
 
-  const ApiService({
-    required this.baseUrl,
-    this.token,
-  });
+  const ApiService({required this.baseUrl, this.token});
 
   Map<String, String> get _headers {
     final headers = <String, String>{};
@@ -22,9 +18,7 @@ class ApiService {
   }
 
   Map<String, String> get _jsonHeaders {
-    final headers = <String, String>{
-      'Content-Type': 'application/json',
-    };
+    final headers = <String, String>{'Content-Type': 'application/json'};
 
     if (token != null && token!.isNotEmpty) {
       headers['Authorization'] = 'Bearer $token';
@@ -41,12 +35,8 @@ class ApiService {
     return jsonDecode(utf8.decode(response.bodyBytes));
   }
 
-  void _validateResponse(
-    http.Response response,
-    String errorMessage,
-  ) {
-    if (response.statusCode >= 200 &&
-        response.statusCode < 300) {
+  void _validateResponse(http.Response response, String errorMessage) {
+    if (response.statusCode >= 200 && response.statusCode < 300) {
       return;
     }
 
@@ -61,12 +51,14 @@ class ApiService {
         if (detail is String) {
           message = detail;
         } else if (detail is List) {
-          message = detail.map((item) {
-            if (item is Map && item['msg'] != null) {
-              return item['msg'].toString();
-            }
-            return item.toString();
-          }).join('; ');
+          message = detail
+              .map((item) {
+                if (item is Map && item['msg'] != null) {
+                  return item['msg'].toString();
+                }
+                return item.toString();
+              })
+              .join('; ');
         } else {
           message = detail.toString();
         }
@@ -88,28 +80,19 @@ class ApiService {
   }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/users/login'),
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: {
-        'username': username.trim(),
-        'password': password.trim(),
-      },
+      headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+      body: {'username': username.trim(), 'password': password.trim()},
     );
 
     if (response.statusCode != 200) {
-      throw Exception(
-        'Erro no login. Verifique e-mail e senha.',
-      );
+      throw Exception('Erro no login. Verifique e-mail e senha.');
     }
 
     final data = _decodeResponse(response);
     final accessToken = data['access_token'];
 
     if (accessToken == null) {
-      throw Exception(
-        'Token não encontrado na resposta do backend.',
-      );
+      throw Exception('Token não encontrado na resposta do backend.');
     }
 
     return accessToken;
@@ -125,10 +108,7 @@ class ApiService {
       headers: _headers,
     );
 
-    _validateResponse(
-      response,
-      'Erro ao carregar dashboard.',
-    );
+    _validateResponse(response, 'Erro ao carregar dashboard.');
 
     return _decodeResponse(response);
   }
@@ -143,10 +123,7 @@ class ApiService {
       headers: _headers,
     );
 
-    _validateResponse(
-      response,
-      'Erro ao carregar organizações.',
-    );
+    _validateResponse(response, 'Erro ao carregar organizações.');
 
     return _decodeResponse(response);
   }
@@ -174,10 +151,7 @@ class ApiService {
       }),
     );
 
-    _validateResponse(
-      response,
-      'Erro ao cadastrar organização.',
-    );
+    _validateResponse(response, 'Erro ao cadastrar organização.');
 
     return _decodeResponse(response);
   }
@@ -206,10 +180,7 @@ class ApiService {
       }),
     );
 
-    _validateResponse(
-      response,
-      'Erro ao editar organização.',
-    );
+    _validateResponse(response, 'Erro ao editar organização.');
 
     return _decodeResponse(response);
   }
@@ -220,10 +191,7 @@ class ApiService {
       headers: _headers,
     );
 
-    _validateResponse(
-      response,
-      'Erro ao excluir organização.',
-    );
+    _validateResponse(response, 'Erro ao excluir organização.');
   }
 
   // ==========================================================
@@ -236,10 +204,7 @@ class ApiService {
       headers: _headers,
     );
 
-    _validateResponse(
-      response,
-      'Erro ao carregar eventos.',
-    );
+    _validateResponse(response, 'Erro ao carregar eventos.');
 
     return _decodeResponse(response);
   }
@@ -263,10 +228,7 @@ class ApiService {
       }),
     );
 
-    _validateResponse(
-      response,
-      'Erro ao cadastrar evento.',
-    );
+    _validateResponse(response, 'Erro ao cadastrar evento.');
 
     return _decodeResponse(response);
   }
@@ -291,10 +253,7 @@ class ApiService {
       }),
     );
 
-    _validateResponse(
-      response,
-      'Erro ao editar evento.',
-    );
+    _validateResponse(response, 'Erro ao editar evento.');
 
     return _decodeResponse(response);
   }
@@ -305,10 +264,7 @@ class ApiService {
       headers: _headers,
     );
 
-    _validateResponse(
-      response,
-      'Erro ao excluir evento.',
-    );
+    _validateResponse(response, 'Erro ao excluir evento.');
   }
 
   // ==========================================================
@@ -321,10 +277,7 @@ class ApiService {
       headers: _headers,
     );
 
-    _validateResponse(
-      response,
-      'Erro ao carregar financeiro.',
-    );
+    _validateResponse(response, 'Erro ao carregar financeiro.');
 
     return _decodeResponse(response);
   }
@@ -348,10 +301,7 @@ class ApiService {
       }),
     );
 
-    _validateResponse(
-      response,
-      'Erro ao cadastrar lançamento financeiro.',
-    );
+    _validateResponse(response, 'Erro ao cadastrar lançamento financeiro.');
 
     return _decodeResponse(response);
   }
@@ -376,10 +326,7 @@ class ApiService {
       }),
     );
 
-    _validateResponse(
-      response,
-      'Erro ao editar lançamento financeiro.',
-    );
+    _validateResponse(response, 'Erro ao editar lançamento financeiro.');
 
     return _decodeResponse(response);
   }
@@ -390,10 +337,7 @@ class ApiService {
       headers: _headers,
     );
 
-    _validateResponse(
-      response,
-      'Erro ao excluir lançamento financeiro.',
-    );
+    _validateResponse(response, 'Erro ao excluir lançamento financeiro.');
   }
 
   // ==========================================================
@@ -407,10 +351,7 @@ class ApiService {
       headers: _headers,
     );
 
-    _validateResponse(
-      response,
-      'Erro ao carregar usuários.',
-    );
+    _validateResponse(response, 'Erro ao carregar usuários.');
 
     return _decodeResponse(response);
   }
@@ -435,10 +376,7 @@ class ApiService {
       }),
     );
 
-    _validateResponse(
-      response,
-      'Erro ao cadastrar usuário.',
-    );
+    _validateResponse(response, 'Erro ao cadastrar usuário.');
 
     return _decodeResponse(response);
   }
@@ -462,10 +400,7 @@ class ApiService {
       }),
     );
 
-    _validateResponse(
-      response,
-      'Erro ao atualizar usuário.',
-    );
+    _validateResponse(response, 'Erro ao atualizar usuário.');
 
     return _decodeResponse(response);
   }
@@ -477,24 +412,17 @@ class ApiService {
       headers: _headers,
     );
 
-    _validateResponse(
-      response,
-      'Erro ao excluir usuário.',
-    );
+    _validateResponse(response, 'Erro ao excluir usuário.');
   }
+
   // RESUMO FINANCEIRO POR USUÁRIO
-  Future<Map<String, dynamic>> getUserFinanceSummary(
-    int userId,
-  ) async {
+  Future<Map<String, dynamic>> getUserFinanceSummary(int userId) async {
     final response = await http.get(
       Uri.parse('$baseUrl/finance/users/$userId/summary'),
       headers: _headers,
     );
 
-    _validateResponse(
-      response,
-      'Erro ao carregar o financeiro do usuário.',
-    );
+    _validateResponse(response, 'Erro ao carregar o financeiro do usuário.');
 
     final data = _decodeResponse(response);
 
@@ -520,5 +448,45 @@ class ApiService {
     );
     _validateResponse(response, 'Erro ao reativar usuário.');
     return Map<String, dynamic>.from(_decodeResponse(response));
+  }
+
+  // Permissões efetivas do usuário autenticado.
+  Future<Map<String, dynamic>> getMyPermissions() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/permissions/me'),
+      headers: _headers,
+    );
+    _validateResponse(response, 'Erro ao carregar permissões.');
+    return Map<String, dynamic>.from(_decodeResponse(response));
+  }
+
+  // Catálogo gerenciável pelo administrador.
+  Future<Map<String, dynamic>> getPermissionCatalog() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/permissions/catalog'),
+      headers: _headers,
+    );
+    _validateResponse(response, 'Erro ao carregar catálogo de permissões.');
+    return Map<String, dynamic>.from(_decodeResponse(response));
+  }
+
+  // Permissões atualmente atribuídas a um visualizador.
+  Future<List<dynamic>> getUserPermissionAssignments(int userId) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/permissions/user/$userId'),
+      headers: _headers,
+    );
+    _validateResponse(response, 'Erro ao consultar permissões do usuário.');
+    return List<dynamic>.from(_decodeResponse(response));
+  }
+
+  // Substitui apenas as permissões de módulos delegáveis.
+  Future<void> setUserPermissions(int userId, Set<String> permissions) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/permissions/user/$userId/set'),
+      headers: _jsonHeaders,
+      body: jsonEncode({'permissions': permissions.toList()}),
+    );
+    _validateResponse(response, 'Erro ao salvar permissões do usuário.');
   }
 }

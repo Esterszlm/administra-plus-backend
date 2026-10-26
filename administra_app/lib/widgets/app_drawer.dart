@@ -40,11 +40,7 @@ class AppDrawer extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    Icons.business_center,
-                    color: Colors.white,
-                    size: 42,
-                  ),
+                  Icon(Icons.business_center, color: Colors.white, size: 42),
                   SizedBox(height: 12),
                   Text(
                     'Administra+',
@@ -63,26 +59,10 @@ class AppDrawer extends StatelessWidget {
               ),
             ),
           ),
-          _menuItem(
-            icon: Icons.dashboard,
-            title: 'Dashboard',
-            index: 0,
-          ),
-          _menuItem(
-            icon: Icons.apartment,
-            title: 'Organizações',
-            index: 1,
-          ),
-          _menuItem(
-            icon: Icons.event,
-            title: 'Eventos',
-            index: 2,
-          ),
-          _menuItem(
-            icon: Icons.receipt_long,
-            title: 'Financeiro',
-            index: 3,
-          ),
+          _menuItem(icon: Icons.dashboard, title: 'Dashboard', index: 0),
+          _menuItem(icon: Icons.apartment, title: 'Organizações', index: 1),
+          _menuItem(icon: Icons.event, title: 'Eventos', index: 2),
+          _menuItem(icon: Icons.receipt_long, title: 'Financeiro', index: 3),
           const Spacer(),
           const Divider(),
           ListTile(

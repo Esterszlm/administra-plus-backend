@@ -44,11 +44,7 @@ class InfoCard extends StatelessWidget {
                   color: AppColors.primaryLight,
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: Icon(
-                  icon,
-                  color: AppColors.primary,
-                  size: 28,
-                ),
+                child: Icon(icon, color: AppColors.primary, size: 28),
               ),
               const Spacer(),
               Container(
@@ -90,10 +86,7 @@ class InfoCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 18),
-          Container(
-            height: 1,
-            color: AppColors.border,
-          ),
+          Container(height: 1, color: AppColors.border),
           const SizedBox(height: 18),
           ...rows.map(
             (row) => Padding(
@@ -136,8 +129,5 @@ class InfoRow {
   final String label;
   final String value;
 
-  InfoRow({
-    required this.label,
-    required this.value,
-  });
+  InfoRow({required this.label, required this.value});
 }

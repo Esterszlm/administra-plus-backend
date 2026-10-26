@@ -3,6 +3,7 @@ import '../core/app_colors.dart';
 
 class AppShell extends StatelessWidget {
   final int selectedIndex;
+  final Set<int> allowedPages;
   final String title;
   final Widget child;
   final Function(int) onSelectPage;
@@ -18,6 +19,7 @@ class AppShell extends StatelessWidget {
   const AppShell({
     super.key,
     required this.selectedIndex,
+    required this.allowedPages,
     required this.title,
     required this.child,
     required this.onSelectPage,
@@ -128,27 +130,32 @@ class AppShell extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          _menuItem(
-            icon: Icons.dashboard_outlined,
-            title: 'Dashboard',
-            index: 0,
-          ),
-          _menuItem(
-            icon: Icons.apartment_outlined,
-            title: 'Organizações',
-            index: 1,
-          ),
-          _menuItem(
-            icon: Icons.event_note_outlined,
-            title: 'Eventos',
-            index: 2,
-          ),
-          _menuItem(
-            icon: Icons.account_balance_wallet_outlined,
-            title: 'Financeiro',
-            index: 3,
-          ),
-          _menuItem(icon: Icons.people_outline, title: 'Usuários', index: 4),
+          if (allowedPages.contains(0))
+            _menuItem(
+              icon: Icons.dashboard_outlined,
+              title: 'Dashboard',
+              index: 0,
+            ),
+          if (allowedPages.contains(1))
+            _menuItem(
+              icon: Icons.apartment_outlined,
+              title: 'Organizações',
+              index: 1,
+            ),
+          if (allowedPages.contains(2))
+            _menuItem(
+              icon: Icons.event_note_outlined,
+              title: 'Eventos',
+              index: 2,
+            ),
+          if (allowedPages.contains(3))
+            _menuItem(
+              icon: Icons.account_balance_wallet_outlined,
+              title: 'Financeiro',
+              index: 3,
+            ),
+          if (allowedPages.contains(4))
+            _menuItem(icon: Icons.people_outline, title: 'Usuários', index: 4),
           const Spacer(),
           Container(
             margin: const EdgeInsets.all(14),

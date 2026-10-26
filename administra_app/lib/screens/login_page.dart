@@ -38,10 +38,7 @@ class _LoginPageState extends State<LoginPage> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => HomePage(
-            token: token,
-            baseUrl: baseUrl,
-          ),
+          builder: (_) => HomePage(token: token, baseUrl: baseUrl),
         ),
       );
     } catch (e) {

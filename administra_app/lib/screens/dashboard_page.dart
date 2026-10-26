@@ -7,10 +7,7 @@ import '../widgets/summary_card.dart';
 class DashboardPage extends StatefulWidget {
   final ApiService apiService;
 
-  const DashboardPage({
-    super.key,
-    required this.apiService,
-  });
+  const DashboardPage({super.key, required this.apiService});
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
@@ -62,102 +59,95 @@ class _DashboardPageState extends State<DashboardPage> {
         child: loading
             ? const Center(child: CircularProgressIndicator())
             : message.isNotEmpty
-                ? Center(
-                    child: Text(
-                      message,
-                      style: const TextStyle(color: AppColors.danger),
+            ? Center(
+                child: Text(
+                  message,
+                  style: const TextStyle(color: AppColors.danger),
+                ),
+              )
+            : SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Resumo geral do sistema',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  )
-                : SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Informações consolidadas do backend Administra+.',
+                      style: TextStyle(color: AppColors.textSecondary),
+                    ),
+                    const SizedBox(height: 24),
+                    Wrap(
+                      spacing: 16,
+                      runSpacing: 16,
                       children: [
-                        const Text(
-                          'Resumo geral do sistema',
-                          style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 26,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        SummaryCard(
+                          title: 'Organizações',
+                          value: '${totals?['organizacoes'] ?? 0}',
+                          icon: Icons.apartment,
                         ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Informações consolidadas do backend Administra+.',
-                          style: TextStyle(color: AppColors.textSecondary),
+                        SummaryCard(
+                          title: 'Usuários',
+                          value: '${totals?['usuarios'] ?? 0}',
+                          icon: Icons.people,
                         ),
-                        const SizedBox(height: 24),
-                        Wrap(
-                          spacing: 16,
-                          runSpacing: 16,
-                          children: [
-                            SummaryCard(
-                              title: 'Organizações',
-                              value: '${totals?['organizacoes'] ?? 0}',
-                              icon: Icons.apartment,
-                            ),
-                            SummaryCard(
-                              title: 'Usuários',
-                              value: '${totals?['usuarios'] ?? 0}',
-                              icon: Icons.people,
-                            ),
-                            SummaryCard(
-                              title: 'Eventos',
-                              value: '${totals?['eventos'] ?? 0}',
-                              icon: Icons.event,
-                            ),
-                            SummaryCard(
-                              title: 'Confirmações',
-                              value: '${totals?['confirmacoes'] ?? 0}',
-                              icon: Icons.check_circle,
-                            ),
-                            SummaryCard(
-                              title: 'Lançamentos',
-                              value:
-                                  '${totals?['lancamentos_financeiros'] ?? 0}',
-                              icon: Icons.receipt_long,
-                            ),
-                          ],
+                        SummaryCard(
+                          title: 'Eventos',
+                          value: '${totals?['eventos'] ?? 0}',
+                          icon: Icons.event,
                         ),
-                        const SizedBox(height: 32),
-                        const Text(
-                          'Resumo financeiro',
-                          style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        SummaryCard(
+                          title: 'Confirmações',
+                          value: '${totals?['confirmacoes'] ?? 0}',
+                          icon: Icons.check_circle,
                         ),
-                        const SizedBox(height: 16),
-                        Wrap(
-                          spacing: 16,
-                          runSpacing: 16,
-                          children: [
-                            SummaryCard(
-                              title: 'Entradas',
-                              value: formatarValor(
-                                finance?['total_entradas'] ?? 0,
-                              ),
-                              icon: Icons.arrow_downward,
-                            ),
-                            SummaryCard(
-                              title: 'Saídas',
-                              value: formatarValor(
-                                finance?['total_saidas'] ?? 0,
-                              ),
-                              icon: Icons.arrow_upward,
-                            ),
-                            SummaryCard(
-                              title: 'Saldo final',
-                              value: formatarValor(
-                                finance?['saldo_final'] ?? 0,
-                              ),
-                              icon: Icons.account_balance_wallet,
-                            ),
-                          ],
+                        SummaryCard(
+                          title: 'Lançamentos',
+                          value: '${totals?['lancamentos_financeiros'] ?? 0}',
+                          icon: Icons.receipt_long,
                         ),
                       ],
                     ),
-                  ),
+                    const SizedBox(height: 32),
+                    const Text(
+                      'Resumo financeiro',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Wrap(
+                      spacing: 16,
+                      runSpacing: 16,
+                      children: [
+                        SummaryCard(
+                          title: 'Entradas',
+                          value: formatarValor(finance?['total_entradas'] ?? 0),
+                          icon: Icons.arrow_downward,
+                        ),
+                        SummaryCard(
+                          title: 'Saídas',
+                          value: formatarValor(finance?['total_saidas'] ?? 0),
+                          icon: Icons.arrow_upward,
+                        ),
+                        SummaryCard(
+                          title: 'Saldo final',
+                          value: formatarValor(finance?['saldo_final'] ?? 0),
+                          icon: Icons.account_balance_wallet,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
       ),
     );
   }

@@ -5,6 +5,7 @@ import 'package:file_saver/file_saver.dart';
 import 'package:flutter/material.dart';
 
 import '../core/app_colors.dart';
+import '../core/access_scope.dart';
 
 /// Tabela reutilizável: pesquisa livre nas colunas visíveis e exportação CSV.
 ///
@@ -103,8 +104,13 @@ class _AdminTablePageState extends State<AdminTablePage> {
     // Extras auxiliam a pesquisa, mas NÃO vão para o arquivo exportado.
     // Exclui chaves que podem conter informações sigilosas.
     const hiddenKeys = {
-      'password', 'hashed_password', 'secret', 'secret_key',
-      'token', 'access_token', 'refresh_token',
+      'password',
+      'hashed_password',
+      'secret',
+      'secret_key',
+      'token',
+      'access_token',
+      'refresh_token',
     };
     final searchable = extras[index].entries
         .where((e) => !hiddenKeys.contains(e.key.toLowerCase()))
@@ -116,27 +122,27 @@ class _AdminTablePageState extends State<AdminTablePage> {
   bool _matches(String haystack, String term) {
     // Impede que a busca por "ativo" retorne também "desativado".
     if (term == 'ativo' || term == 'desativado' || term == 'inativo') {
-      return RegExp('(^|[^a-z])${RegExp.escape(term)}([^a-z]|\$)')
-          .hasMatch(haystack);
+      return RegExp(
+        '(^|[^a-z])${RegExp.escape(term)}([^a-z]|\$)',
+      ).hasMatch(haystack);
     }
     return haystack.contains(term);
   }
 
   List<int> get _matchingIndices {
-    final terms = _normalize(_query.trim())
-        .split(RegExp(r'\s+'))
-        .where((value) => value.isNotEmpty)
-        .toList();
+    final terms = _normalize(
+      _query.trim(),
+    ).split(RegExp(r'\s+')).where((value) => value.isNotEmpty).toList();
 
     if (terms.isEmpty) {
       return List<int>.generate(widget.rows.length, (index) => index);
     }
-    return List<int>.generate(widget.rows.length, (index) => index)
-        .where((index) {
-          final text = _indexText(index);
-          return terms.every((term) => _matches(text, term));
-        })
-        .toList();
+    return List<int>.generate(widget.rows.length, (index) => index).where((
+      index,
+    ) {
+      final text = _indexText(index);
+      return terms.every((term) => _matches(text, term));
+    }).toList();
   }
 
   String _csvCell(String value) {
@@ -165,28 +171,33 @@ class _AdminTablePageState extends State<AdminTablePage> {
         headerLabels.add(title.isEmpty ? 'Coluna ${i + 1}' : title);
       }
 
-      final lines = <String>[
-        headerLabels.map(_csvCell).join(';'),
-      ];
+      final lines = <String>[headerLabels.map(_csvCell).join(';')];
       for (final rowIndex in indices) {
         final cells = widget.rows[rowIndex].cells;
-        lines.add(keepColumns.map((i) {
-          if (i >= cells.length) return _csvCell('');
-          return _csvCell(_widgetText(cells[i].child));
-        }).join(';'));
+        lines.add(
+          keepColumns
+              .map((i) {
+                if (i >= cells.length) return _csvCell('');
+                return _csvCell(_widgetText(cells[i].child));
+              })
+              .join(';'),
+        );
       }
       // Excel em PT-BR: UTF-8 BOM, ponto e vírgula e CRLF.
       final content = lines.join('\r\n');
       final bytes = Uint8List.fromList([
-        0xEF, 0xBB, 0xBF,
+        0xEF,
+        0xBB,
+        0xBF,
         ...utf8.encode(content),
       ]);
       final now = DateTime.now();
-      final date = '${now.year}${now.month.toString().padLeft(2, '0')}'
+      final date =
+          '${now.year}${now.month.toString().padLeft(2, '0')}'
           '${now.day.toString().padLeft(2, '0')}';
-      final section = _normalize(widget.title)
-          .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
-          .replaceAll(RegExp(r'^_|_$'), '');
+      final section = _normalize(
+        widget.title,
+      ).replaceAll(RegExp(r'[^a-z0-9]+'), '_').replaceAll(RegExp(r'^_|_$'), '');
       await FileSaver.instance.saveFile(
         name: 'administra_${section}_$date',
         bytes: bytes,
@@ -199,20 +210,86 @@ class _AdminTablePageState extends State<AdminTablePage> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Não foi possível exportar: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Não foi possível exportar: $e')));
     } finally {
       if (mounted) setState(() => _exporting = false);
     }
   }
 
+  String? _moduleFromTitle() {
+    switch (widget.title.toLowerCase().trim()) {
+      case 'organizações':
+        return 'organizations';
+      case 'eventos':
+        return 'events';
+      case 'financeiro':
+        return 'finance';
+      case 'usuários':
+        return 'users';
+      default:
+        return null;
+    }
+  }
+
+  List<DataRow> _renderRows(
+    List<DataRow> source,
+    AccessScope? access,
+    String? module,
+  ) {
+    if (access == null || access.isAdmin || module == null) return source;
+    final actionIndex = widget.columns.indexWhere(
+      (col) => _normalize(_widgetText(col.label)) == 'acoes',
+    );
+    if (actionIndex < 0) return source;
+
+    return source.map((row) {
+      if (actionIndex >= row.cells.length) return row;
+      final original = row.cells[actionIndex].child;
+      if (original is! Row) return row;
+      final visibleActions = original.children.where((child) {
+        if (child is! IconButton) return true;
+        final tooltip = (child.tooltip ?? '').toLowerCase();
+        if (tooltip.contains('editar')) return access.can('${module}_edit');
+        if (tooltip.contains('excluir')) return access.can('${module}_delete');
+        if (tooltip.contains('desativar') || tooltip.contains('reativar')) {
+          return false; // gerenciamento de status: apenas administrador
+        }
+        if (tooltip.contains('permiss') || tooltip.contains('cadastrar')) {
+          return false; // administração de permissões: apenas administrador
+        }
+        return true;
+      }).toList();
+      final cells = List<DataCell>.from(row.cells);
+      cells[actionIndex] = DataCell(
+        Row(mainAxisSize: original.mainAxisSize, children: visibleActions),
+      );
+      return DataRow(
+        key: row.key,
+        selected: row.selected,
+        onSelectChanged: row.onSelectChanged,
+        color: row.color,
+        mouseCursor: row.mouseCursor,
+        cells: cells,
+      );
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     final indices = _matchingIndices;
-    final filteredRows = indices.map((index) => widget.rows[index]).toList();
-    final hasResults = !widget.loading && widget.message.isEmpty &&
-        filteredRows.isNotEmpty;
+    final access = AccessScope.maybeOf(context);
+    final module = _moduleFromTitle();
+    final canCreate =
+        module == null || access == null || access.can('${module}_create');
+    final filteredRows = _renderRows(
+      indices.map((index) => widget.rows[index]).toList(),
+      access,
+      module,
+    );
+    final hasResults =
+        !widget.loading && widget.message.isEmpty && filteredRows.isNotEmpty;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -226,7 +303,7 @@ class _AdminTablePageState extends State<AdminTablePage> {
               icon: const Icon(Icons.refresh),
               label: const Text('Atualizar'),
             ),
-            if (widget.onNew != null) ...[
+            if (widget.onNew != null && canCreate) ...[
               const SizedBox(width: 12),
               ElevatedButton.icon(
                 onPressed: widget.loading ? null : widget.onNew,
@@ -288,9 +365,7 @@ class _AdminTablePageState extends State<AdminTablePage> {
           ),
         ),
         if (widget.loading)
-          const Expanded(
-            child: Center(child: CircularProgressIndicator()),
-          )
+          const Expanded(child: Center(child: CircularProgressIndicator()))
         else if (widget.message.isNotEmpty)
           Expanded(
             child: Center(

@@ -7,10 +7,14 @@ import '../widgets/finance_form_dialog.dart';
 
 class FinancePage extends StatefulWidget {
   final ApiService apiService;
+  final bool isAdmin;
+  final Set<String> permissions;
 
   const FinancePage({
     super.key,
     required this.apiService,
+    this.isAdmin = false,
+    this.permissions = const <String>{},
   });
 
   @override
@@ -18,6 +22,8 @@ class FinancePage extends StatefulWidget {
 }
 
 class _FinancePageState extends State<FinancePage> {
+  bool _can(String permission) =>
+      widget.isAdmin || widget.permissions.contains(permission);
   bool loading = true;
   String message = '';
   List<dynamic> finances = [];
@@ -39,7 +45,13 @@ class _FinancePageState extends State<FinancePage> {
 
     try {
       final financeData = await widget.apiService.getFinance();
-      final organizationsData = await widget.apiService.getOrganizations();
+      // finance_view e organizations_view são permissões independentes.
+      List<dynamic> organizationsData = [];
+      try {
+        organizationsData = await widget.apiService.getOrganizations();
+      } catch (_) {
+        organizationsData = [];
+      }
 
       // Financeiro e Usuários usam permissões distintas. Se a conta não puder
       // listar usuários, a consulta financeira continua funcionando.
@@ -68,9 +80,7 @@ class _FinancePageState extends State<FinancePage> {
 
   void showMessage(String text) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(text)),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
   }
 
   String tipoFormatado(dynamic valor) {
@@ -111,21 +121,22 @@ class _FinancePageState extends State<FinancePage> {
       builder: (_) => FinanceFormDialog(
         organizations: organizations,
         users: users,
-        onSubmit: ({
-          required String type,
-          required double amount,
-          required String description,
-          required int organizationId,
-          int? userId,
-        }) async {
-          await widget.apiService.createFinance(
-            type: type,
-            amount: amount,
-            description: description,
-            organizationId: organizationId,
-            userId: userId,
-          );
-        },
+        onSubmit:
+            ({
+              required String type,
+              required double amount,
+              required String description,
+              required int organizationId,
+              int? userId,
+            }) async {
+              await widget.apiService.createFinance(
+                type: type,
+                amount: amount,
+                description: description,
+                organizationId: organizationId,
+                userId: userId,
+              );
+            },
       ),
     );
 
@@ -150,22 +161,23 @@ class _FinancePageState extends State<FinancePage> {
         finance: finance,
         organizations: organizations,
         users: users,
-        onSubmit: ({
-          required String type,
-          required double amount,
-          required String description,
-          required int organizationId,
-          int? userId,
-        }) async {
-          await widget.apiService.updateFinance(
-            id: id,
-            type: type,
-            amount: amount,
-            description: description,
-            organizationId: organizationId,
-            userId: userId,
-          );
-        },
+        onSubmit:
+            ({
+              required String type,
+              required double amount,
+              required String description,
+              required int organizationId,
+              int? userId,
+            }) async {
+              await widget.apiService.updateFinance(
+                id: id,
+                type: type,
+                amount: amount,
+                description: description,
+                organizationId: organizationId,
+                userId: userId,
+              );
+            },
       ),
     );
 
@@ -228,7 +240,7 @@ class _FinancePageState extends State<FinancePage> {
       message: message,
       emptyMessage: 'Nenhum lançamento financeiro cadastrado.',
       onRefresh: loadData,
-      onNew: openCreateDialog,
+      onNew: _can('finance_create') ? openCreateDialog : null,
       columns: const [
         DataColumn(label: Text('ID')),
         DataColumn(label: Text('Descrição')),
@@ -254,24 +266,26 @@ class _FinancePageState extends State<FinancePage> {
               ),
             ),
             DataCell(Text(formatarValor(item['amount']))),
-            DataCell(Text(
-              texto(item['organization_name'] ?? item['organization_id']),
-            )),
+            DataCell(
+              Text(texto(item['organization_name'] ?? item['organization_id'])),
+            ),
             DataCell(Text(usuarioFormatado(item))),
             DataCell(
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  IconButton(
-                    tooltip: 'Editar',
-                    icon: const Icon(Icons.edit_outlined),
-                    onPressed: () => openEditDialog(item),
-                  ),
-                  IconButton(
-                    tooltip: 'Excluir',
-                    icon: const Icon(Icons.delete_outline),
-                    onPressed: () => confirmDelete(item),
-                  ),
+                  if (_can('finance_edit'))
+                    IconButton(
+                      tooltip: 'Editar',
+                      icon: const Icon(Icons.edit_outlined),
+                      onPressed: () => openEditDialog(item),
+                    ),
+                  if (_can('finance_delete'))
+                    IconButton(
+                      tooltip: 'Excluir',
+                      icon: const Icon(Icons.delete_outline),
+                      onPressed: () => confirmDelete(item),
+                    ),
                 ],
               ),
             ),

@@ -30,83 +30,79 @@ class ListPageLayout extends StatelessWidget {
         child: loading
             ? const Center(child: CircularProgressIndicator())
             : message.isNotEmpty
-                ? Center(
-                    child: Text(
-                      message,
-                      style: const TextStyle(color: AppColors.danger),
-                    ),
-                  )
-                : SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(24),
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: AppColors.border),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      title,
-                                      style: const TextStyle(
-                                        color: AppColors.textPrimary,
-                                        fontSize: 28,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      subtitle,
-                                      style: const TextStyle(
-                                        color: AppColors.textSecondary,
-                                        fontSize: 15,
-                                      ),
-                                    ),
-                                  ],
+            ? Center(
+                child: Text(
+                  message,
+                  style: const TextStyle(color: AppColors.danger),
+                ),
+              )
+            : SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  title,
+                                  style: const TextStyle(
+                                    color: AppColors.textPrimary,
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                              ElevatedButton.icon(
-                                onPressed: onRefresh,
-                                icon: const Icon(Icons.refresh),
-                                label: const Text('Atualizar'),
-                              ),
-                            ],
+                                const SizedBox(height: 8),
+                                Text(
+                                  subtitle,
+                                  style: const TextStyle(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          ElevatedButton.icon(
+                            onPressed: onRefresh,
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('Atualizar'),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 26),
+                    if (children.isEmpty)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: Text(
+                          emptyMessage,
+                          style: const TextStyle(
+                            color: AppColors.textSecondary,
                           ),
                         ),
-                        const SizedBox(height: 26),
-                        if (children.isEmpty)
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(24),
-                            decoration: BoxDecoration(
-                              color: AppColors.surface,
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(color: AppColors.border),
-                            ),
-                            child: Text(
-                              emptyMessage,
-                              style: const TextStyle(
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          )
-                        else
-                          Wrap(
-                            spacing: 22,
-                            runSpacing: 22,
-                            children: children,
-                          ),
-                      ],
-                    ),
-                  ),
+                      )
+                    else
+                      Wrap(spacing: 22, runSpacing: 22, children: children),
+                  ],
+                ),
+              ),
       ),
     );
   }
