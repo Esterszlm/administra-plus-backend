@@ -44,6 +44,8 @@ def confirm(
             detail="Evento não encontrado"
         )
 
+    auth.ensure_same_organization(current_user, event.organization_id)
+
     existing_confirmation = db.query(models.Confirmation).filter(
         models.Confirmation.user_id == current_user.id,
         models.Confirmation.event_id == data.event_id
@@ -81,7 +83,12 @@ def list_confirmations(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.require_permission("confirmations_view"))
 ):
-    confirmations = db.query(models.Confirmation).all()
+    query = db.query(models.Confirmation)
+    if current_user.role != "admin":
+        query = query.join(models.Event, models.Event.id == models.Confirmation.event_id).filter(
+            models.Event.organization_id == current_user.organization_id
+        )
+    confirmations = query.all()
 
     result = []
 

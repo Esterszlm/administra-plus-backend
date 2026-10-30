@@ -20,6 +20,7 @@ def create_event(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.require_permission("events_create"))
 ):
+    auth.ensure_same_organization(current_user, event.organization_id)
     organization_name = None
 
     if event.organization_id:
@@ -56,7 +57,10 @@ def list_events(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.require_permission("events_view"))
 ):
-    events = db.query(models.Event).all()
+    query = db.query(models.Event)
+    if current_user.role != "admin":
+        query = query.filter(models.Event.organization_id == current_user.organization_id)
+    events = query.all()
 
     result = []
 
@@ -100,6 +104,9 @@ def update_event(
             status_code=404,
             detail="Evento não encontrado"
         )
+
+    auth.ensure_same_organization(current_user, event.organization_id)
+    auth.ensure_same_organization(current_user, event_data.organization_id)
 
     organization_name = None
 
@@ -151,6 +158,8 @@ def delete_event(
             status_code=404,
             detail="Evento não encontrado"
         )
+
+    auth.ensure_same_organization(current_user, event.organization_id)
 
     existing_confirmation = db.query(models.Confirmation).filter(
         models.Confirmation.event_id == event_id

@@ -2,6 +2,7 @@
 from passlib.context import CryptContext
 from jose import jwt, JWTError
 from datetime import datetime, timedelta
+import os, secrets
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
@@ -14,7 +15,8 @@ import models
 # CONFIGURAÇÕES DE AUTENTICAÇÃO JWT
 # ==========================================================
 
-SECRET_KEY = "administra_secret"
+# Chave lida do ambiente; sem variável definida, gera chave aleatória por execução.
+SECRET_KEY = os.environ.get("ADMINISTRA_SECRET_KEY") or secrets.token_urlsafe(64)
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
@@ -216,3 +218,18 @@ def require_permission(permission_name: str):
         return current_user
 
     return permission_checker
+
+
+# ==========================================================
+# ISOLAMENTO ENTRE ORGANIZAÇÕES
+# ==========================================================
+
+def ensure_same_organization(current_user, organization_id):
+    """Administrador acessa tudo; demais usuários apenas a própria organização."""
+    if current_user.role == "admin":
+        return
+    if current_user.organization_id is None or current_user.organization_id != organization_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Sem permissão para acessar dados de outra organização",
+        )

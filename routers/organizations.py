@@ -20,6 +20,8 @@ def create_organization(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.require_permission("organizations_create"))
 ):
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Somente administradores cadastram organizações")
     document = organization.document.strip()
 
     existing_organization = db.query(models.Organization).filter(
@@ -54,7 +56,10 @@ def list_organizations(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.require_permission("organizations_view"))
 ):
-    return db.query(models.Organization).all()
+    query = db.query(models.Organization)
+    if current_user.role != "admin":
+        query = query.filter(models.Organization.id == current_user.organization_id)
+    return query.all()
 
 
 @router.put("/{organization_id}", response_model=schemas.OrganizationResponse)
@@ -64,6 +69,7 @@ def update_organization(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.require_permission("organizations_edit"))
 ):
+    auth.ensure_same_organization(current_user, organization_id)
     organization = db.query(models.Organization).filter(
         models.Organization.id == organization_id
     ).first()
@@ -107,6 +113,7 @@ def delete_organization(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.require_permission("organizations_delete"))
 ):
+    auth.ensure_same_organization(current_user, organization_id)
     organization = db.query(models.Organization).filter(
         models.Organization.id == organization_id
     ).first()

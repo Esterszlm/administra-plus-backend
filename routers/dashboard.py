@@ -20,23 +20,30 @@ def get_dashboard(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(auth.require_permission("dashboard_view"))
 ):
-    total_organizations = db.query(models.Organization).count()
-    total_users = db.query(models.User).count()
-    total_events = db.query(models.Event).count()
-    total_confirmations = db.query(models.Confirmation).count()
-    total_finance_entries = db.query(models.Finance).count()
+    is_admin = current_user.role == "admin"
+    org_id = current_user.organization_id
 
-    total_entradas = db.query(
-        func.coalesce(func.sum(models.Finance.amount), 0)
-    ).filter(
-        models.Finance.type == "entrada"
-    ).scalar()
+    def scoped(query, column):
+        return query if is_admin else query.filter(column == org_id)
 
-    total_saidas = db.query(
+    total_organizations = scoped(db.query(models.Organization), models.Organization.id).count()
+    total_users = scoped(db.query(models.User), models.User.organization_id).count()
+    total_events = scoped(db.query(models.Event), models.Event.organization_id).count()
+    confirmations_query = db.query(models.Confirmation)
+    if not is_admin:
+        confirmations_query = confirmations_query.join(
+            models.Event, models.Event.id == models.Confirmation.event_id
+        ).filter(models.Event.organization_id == org_id)
+    total_confirmations = confirmations_query.count()
+    total_finance_entries = scoped(db.query(models.Finance), models.Finance.organization_id).count()
+
+    total_entradas = scoped(db.query(
         func.coalesce(func.sum(models.Finance.amount), 0)
-    ).filter(
-        models.Finance.type == "saida"
-    ).scalar()
+    ).filter(models.Finance.type == "entrada"), models.Finance.organization_id).scalar()
+
+    total_saidas = scoped(db.query(
+        func.coalesce(func.sum(models.Finance.amount), 0)
+    ).filter(models.Finance.type == "saida"), models.Finance.organization_id).scalar()
 
     saldo_final = total_entradas - total_saidas
 
