@@ -1,8 +1,8 @@
-import os, sys
+import os, sys, tempfile
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-os.chdir(ROOT); sys.path.insert(0, ROOT)
-if os.path.exists("administra.db"):
-    os.remove("administra.db")
+sys.path.insert(0, ROOT)
+# Os testes rodam em uma pasta temporária: o banco real (administra.db) nunca é tocado.
+os.chdir(tempfile.mkdtemp(prefix="administra_testes_"))
 
 from datetime import datetime
 import pytest

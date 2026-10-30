@@ -1,6 +1,8 @@
-import os, sys, time, json, statistics as st
-ROOT=sys.argv[1]; os.chdir(ROOT); sys.path.insert(0,ROOT)
-if os.path.exists("administra.db"): os.remove("administra.db")
+"""Comparação de desempenho. Uso: python benchmark_desempenho.py . resultado.json
+Roda em pasta temporária: o banco real (administra.db) nunca é tocado."""
+import os, sys, time, json, tempfile
+ROOT=os.path.abspath(sys.argv[1]); OUT=os.path.abspath(sys.argv[2])
+sys.path.insert(0,ROOT); os.chdir(tempfile.mkdtemp(prefix="administra_bench_"))
 from datetime import datetime
 from fastapi.testclient import TestClient
 import main, models, auth
@@ -36,4 +38,6 @@ for name,f in cases.items():
         t=time.perf_counter(); r=f(); ts.append((time.perf_counter()-t)*1000); assert r.status_code==200
     n=len(r.json()) if name=="GET /events/" else None
     out[name]=dict(samples=ts,rows=n)
-json.dump(out,open(sys.argv[2],"w"))
+json.dump(out,open(OUT,"w"))
+for k,v in out.items():
+    s=sorted(v["samples"]); print(f"{k}: mediana {s[len(s)//2]:.1f} ms")
