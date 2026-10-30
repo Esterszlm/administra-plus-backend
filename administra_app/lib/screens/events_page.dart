@@ -26,8 +26,13 @@ class _EventsPageState extends State<EventsPage> {
     });
 
     try {
-      final eventsData = await widget.apiService.getEvents();
-      final organizationsData = await widget.apiService.getOrganizations();
+       final eventsData = await widget.apiService.getEvents();
+      List<dynamic> organizationsData = [];
+      try {
+        organizationsData = await widget.apiService.getOrganizations();
+      } catch (_) {
+        // Sem permissão de organizações: a tela continua exibindo os eventos.
+      }
 
       setState(() {
         events = eventsData;
