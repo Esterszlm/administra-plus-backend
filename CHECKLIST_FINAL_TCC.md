@@ -110,9 +110,10 @@ password: 123456
 - [ ] É possível criar usuário válido.
 - [ ] O sistema bloqueia e-mail duplicado.
 - [ ] O sistema valida organização vinculada ao usuário.
-- [ ] O sistema bloqueia exclusão do próprio usuário.
-- [ ] O sistema bloqueia exclusão do último administrador.
-- [ ] O sistema bloqueia alteração que remova o último administrador.
+- [ ] O sistema bloqueia a exclusão física de usuários (a desativação preserva o histórico).
+- [ ] É possível desativar e reativar usuário, com data e motivo registrados.
+- [ ] O administrador não consegue desativar a própria conta.
+- [ ] O sistema bloqueia desativação ou alteração que remova o último administrador ativo.
 
 ---
 
@@ -212,6 +213,10 @@ flutter run -d chrome
 - [ ] A tela de organizações funciona.
 - [ ] A tela de eventos funciona.
 - [ ] A tela financeira funciona.
+- [ ] A tela de usuários funciona, incluindo financeiro individual.
+- [ ] O administrador consegue gerenciar permissões de um visualizador.
+- [ ] A confirmação de presença e a lista de confirmados funcionam na tela de eventos.
+- [ ] Pesquisa e exportação CSV funcionam.
 - [ ] O botão atualizar funciona.
 - [ ] O botão sair retorna para o login.
 - [ ] A acentuação dos textos aparece corretamente.

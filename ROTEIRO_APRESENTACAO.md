@@ -187,11 +187,12 @@ O backend possui as seguintes funcionalidades implementadas:
 - Cadastro de usuários.
 - Listagem de usuários.
 - Edição de usuários.
-- Exclusão de usuários.
+- Desativação e reativação de usuários, com registro de data e motivo e preservação do histórico.
+- Bloqueio da exclusão física de usuários.
 - Validação de e-mail duplicado.
 - Validação de organização vinculada.
-- Bloqueio para impedir exclusão do próprio usuário.
-- Bloqueio para impedir remoção do último administrador.
+- Bloqueio para impedir que o administrador desative a própria conta.
+- Bloqueio para impedir a remoção ou desativação do último administrador ativo.
 
 ### Organizações
 
@@ -244,18 +245,19 @@ O backend possui as seguintes funcionalidades implementadas:
 
 ## 9. Funcionalidades implementadas no frontend
 
-O frontend foi desenvolvido em Flutter Web e possui uma interface simples para demonstrar a integração com o backend.
+O frontend foi desenvolvido em Flutter Web e está integrado ao backend.
 
 Funcionalidades implementadas:
 
 - Tela de login.
-- Autenticação com usuário administrador.
-- Acesso ao dashboard.
-- Exibição dos dados consolidados do backend.
-- Menu lateral de navegação.
-- Tela de organizações.
-- Tela de eventos.
-- Tela financeira.
+- Dashboard com dados consolidados do backend.
+- Menu lateral exibindo apenas os módulos permitidos ao usuário.
+- Cadastro, listagem, edição e exclusão de organizações, eventos e lançamentos financeiros.
+- Tela de usuários com cadastro, edição, desativação e reativação.
+- Consulta ao financeiro individual de cada usuário.
+- Gerenciamento de permissões dos visualizadores pelo administrador.
+- Confirmação de presença e lista de confirmados na tela de eventos.
+- Pesquisa e exportação CSV.
 - Botão de atualizar dados.
 - Botão de sair.
 

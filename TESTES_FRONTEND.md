@@ -8,9 +8,10 @@ O objetivo dos testes é demonstrar que o frontend consegue:
 - Consumir a API do backend.
 - Utilizar token JWT.
 - Exibir dados reais do dashboard.
-- Listar organizações.
-- Listar eventos.
-- Listar lançamentos financeiros.
+- Cadastrar, listar, editar e excluir organizações, eventos e lançamentos financeiros.
+- Gerenciar usuários e permissões.
+- Confirmar presença em eventos e consultar os confirmados.
+- Restringir menus, ações e dados conforme o perfil do usuário.
 - Navegar pelo menu lateral.
 - Realizar logout.
 
@@ -296,6 +297,22 @@ A rota consumida pelo frontend é:
 GET /events/
 ```
 
+### Confirmação de presença
+
+1. Clicar no ícone **Confirmar presença** de um evento.
+2. Resultado esperado: mensagem de sucesso.
+3. Clicar novamente no mesmo ícone.
+4. Resultado esperado: mensagem "Você já confirmou presença nesse evento".
+5. Clicar no ícone **Ver confirmados**.
+6. Resultado esperado: janela com o nome do usuário e o status "confirmado".
+
+Rotas consumidas: `POST /confirmations/` e `GET /confirmations/`.
+
+### Restrição por organização
+
+1. Entrar com um usuário viewer que tenha permissão de eventos.
+2. Resultado esperado: a tela exibe somente os eventos da organização desse usuário. Sem permissão de confirmações, os ícones de confirmação ficam ocultos.
+
 ---
 
 ## 12. Teste da tela financeira
@@ -413,4 +430,4 @@ Ao final dos testes, o frontend deve demonstrar:
 - Integração entre Flutter Web e FastAPI.
 - Restrição dos dados exibidos à organização do usuário viewer.
 
-O frontend desenvolvido atende ao objetivo de apresentar uma interface mínima funcional para o sistema Administra+.
+O frontend desenvolvido atende ao objetivo de oferecer uma interface funcional para as operações administrativas do Administra+, respeitando as permissões e a organização de cada usuário.
