@@ -26,6 +26,7 @@ class _UserPermissionsDialogState extends State<UserPermissionsDialog> {
     'events': 'Eventos',
     'finance': 'Financeiro',
     'users': 'Usuários',
+    'confirmations': 'Confirmações',
   };
 
   static const Map<String, String> _actionLabels = {
@@ -222,7 +223,10 @@ class _UserPermissionsDialogState extends State<UserPermissionsDialog> {
                                           contentPadding: EdgeInsets.zero,
                                           dense: true,
                                           title: Text(
-                                            _actionLabels[action] ?? action,
+                                            name == 'confirmations_create'
+                                                ? 'Confirmar'
+                                                : _actionLabels[action] ??
+                                                      action,
                                           ),
                                           value: _selected.contains(name),
                                           onChanged:

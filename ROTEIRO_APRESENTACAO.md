@@ -385,6 +385,8 @@ GET /events/
 
 Mostrar os eventos cadastrados e seus dados principais.
 
+Clicar no ícone de confirmar presença em um evento e, em seguida, no ícone de confirmados para mostrar a lista de participantes.
+
 Em seguida, entrar com um usuário viewer que tenha permissão de eventos e mostrar que ele visualiza somente os eventos da própria organização.
 
 ---
@@ -520,7 +522,6 @@ Como o projeto foi desenvolvido como um protótipo acadêmico, algumas funcional
 Limitações atuais:
 
 - Banco de dados local SQLite.
-- Confirmação de presença sem fluxo completo na interface.
 - Testes automatizados restritos ao backend.
 - Listagem de eventos com uma consulta adicional por evento.
 - Sem deploy em produção.
@@ -539,7 +540,7 @@ Como melhorias futuras, o sistema pode evoluir com:
 
 - Migração para PostgreSQL.
 - Deploy em nuvem.
-- Confirmação de presença pela interface.
+- Seleção dos status "recusado" e "talvez" na confirmação de presença pela interface.
 - Otimização das consultas da listagem de eventos.
 - Armazenamento da chave JWT em um serviço de gerenciamento de segredos.
 - Avaliação de usabilidade com usuários finais, mediante aprovação de Comitê de Ética em Pesquisa.

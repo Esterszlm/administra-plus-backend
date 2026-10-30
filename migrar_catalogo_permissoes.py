@@ -24,6 +24,8 @@ CATALOG = {
     "users_view": "Visualizar usuários",
     "users_create": "Cadastrar usuários",
     "users_edit": "Editar cadastros de usuários",
+    "confirmations_view": "Visualizar confirmações de presença",
+    "confirmations_create": "Confirmar presença em eventos",
 }
 
 if engine.url.get_backend_name() != "sqlite":

@@ -26,7 +26,7 @@ O Administra+ centraliza o cadastro de organizações, usuários, eventos, confi
 - **Dashboard:** indicadores administrativos e resumo financeiro, mediante autorização.
 - **Organizações:** cadastro, consulta, atualização e operações administrativas disponíveis na API e na interface.
 - **Eventos:** cadastro, consulta, edição e exclusão conforme as regras de negócio; proteção de exclusão quando há confirmações vinculadas.
-- **Confirmações de presença:** registro e consulta por meio da API; validações de duplicidade e situação.
+- **Confirmações de presença:** na tela de Eventos, o usuário confirma a própria presença e consulta a lista de confirmados de cada evento; validações de duplicidade e situação.
 - **Usuários:** cadastro, consulta e edição; status ativo/desativado, data e motivo de desativação, com preservação do histórico relacionado.
 - **Financeiro:** lançamentos de entrada e saída, associação opcional a usuários, consulta de histórico e resumo financeiro individual.
 - **Permissões:** administrador define os módulos e as ações autorizadas para usuários do perfil `viewer`; telas e ações não autorizadas são ocultadas na interface. A API também utiliza validações de autorização.
@@ -169,6 +169,7 @@ O catálogo delegável utilizado na interface administrativa contempla:
 | Eventos | `events_view`, `events_create`, `events_edit`, `events_delete` |
 | Financeiro | `finance_view`, `finance_create`, `finance_edit`, `finance_delete` |
 | Usuários | `users_view`, `users_create`, `users_edit` |
+| Confirmações | `confirmations_view`, `confirmations_create` |
 
 As permissões de administração do próprio catálogo não são delegadas pelo painel de permissões dos visualizadores. Esconder menus no Flutter é um recurso de usabilidade: a restrição efetiva precisa ser conferida também nos endpoints do FastAPI.
 

@@ -239,6 +239,7 @@ flutter run -d chrome
 - [ ] Um viewer com permissão de eventos vê somente os eventos da própria organização.
 - [ ] O administrador vê os eventos de todas as organizações.
 - [ ] A tela de eventos abre para um viewer sem permissão de organizações.
+- [ ] A confirmação de presença funciona pela tela de Eventos e não permite confirmar duas vezes.
 
 ---
 
@@ -290,7 +291,6 @@ Durante a apresentação, seguir esta ordem:
 
 - [ ] O projeto é um protótipo acadêmico.
 - [ ] O banco utilizado é SQLite local.
-- [ ] A confirmação de presença ainda não possui fluxo completo na interface.
 - [ ] Os testes automatizados cobrem apenas o backend.
 - [ ] O sistema ainda não possui deploy em produção.
 - [ ] O sistema ainda não possui recuperação de senha.
@@ -304,7 +304,7 @@ Durante a apresentação, seguir esta ordem:
 
 - [ ] Migrar banco para PostgreSQL.
 - [ ] Fazer deploy em nuvem.
-- [ ] Criar fluxo de confirmação de presença na interface.
+- [ ] Permitir os status "recusado" e "talvez" na interface.
 - [ ] Otimizar as consultas da listagem de eventos.
 - [ ] Guardar a chave JWT em um serviço de gerenciamento de segredos.
 - [ ] Criar recuperação de senha.

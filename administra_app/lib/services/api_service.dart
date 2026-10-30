@@ -489,4 +489,24 @@ class ApiService {
     );
     _validateResponse(response, 'Erro ao salvar permissões do usuário.');
   }
+
+  // Confirma a presença do usuário autenticado em um evento.
+  Future<void> confirmPresence(int eventId) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/confirmations/'),
+      headers: _jsonHeaders,
+      body: jsonEncode({'event_id': eventId, 'status': 'confirmado'}),
+    );
+    _validateResponse(response, 'Erro ao confirmar presença.');
+  }
+
+  // Lista as confirmações visíveis para o usuário autenticado.
+  Future<List<dynamic>> getConfirmations() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/confirmations/'),
+      headers: _headers,
+    );
+    _validateResponse(response, 'Erro ao carregar confirmações.');
+    return List<dynamic>.from(_decodeResponse(response) ?? []);
+  }
 }

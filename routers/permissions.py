@@ -21,6 +21,7 @@ MANAGED = {
     "events": ["events_view", "events_create", "events_edit", "events_delete"],
     "finance": ["finance_view", "finance_create", "finance_edit", "finance_delete"],
     "users": ["users_view", "users_create", "users_edit"],
+    "confirmations": ["confirmations_view", "confirmations_create"],
 }
 ALLOWED_NAMES = set().union(*MANAGED.values())
 

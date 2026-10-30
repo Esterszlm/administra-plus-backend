@@ -170,6 +170,68 @@ class _EventsPageState extends State<EventsPage> {
     }
   }
 
+  Future<void> confirmPresence(Map<String, dynamic> event) async {
+    final id = int.tryParse(event['id'].toString());
+    if (id == null) {
+      showSuccess('ID do evento inválido.');
+      return;
+    }
+    try {
+      await widget.apiService.confirmPresence(id);
+      showSuccess('Presença confirmada no evento "${texto(event['title'])}".');
+    } catch (e) {
+      showSuccess(e.toString().replaceAll('Exception: ', ''));
+    }
+  }
+
+  Future<void> showConfirmations(Map<String, dynamic> event) async {
+    final id = int.tryParse(event['id'].toString());
+    if (id == null) {
+      showSuccess('ID do evento inválido.');
+      return;
+    }
+    List<dynamic> all;
+    try {
+      all = await widget.apiService.getConfirmations();
+    } catch (e) {
+      showSuccess(e.toString().replaceAll('Exception: ', ''));
+      return;
+    }
+    final confirmed = all
+        .where((item) => item['event_id'].toString() == id.toString())
+        .toList();
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text('Confirmados: ${texto(event['title'])}'),
+          content: SizedBox(
+            width: 360,
+            child: confirmed.isEmpty
+                ? const Text('Nenhuma confirmação de presença neste evento.')
+                : ListView(
+                    shrinkWrap: true,
+                    children: confirmed.map((item) {
+                      return ListTile(
+                        leading: const Icon(Icons.person_outline),
+                        title: Text(texto(item['user_name'])),
+                        subtitle: Text(texto(item['status'])),
+                      );
+                    }).toList(),
+                  ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Fechar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -217,6 +279,20 @@ class _EventsPageState extends State<EventsPage> {
             DataCell(
               Row(
                 children: [
+                  IconButton(
+                    tooltip: 'Confirmar presença',
+                    icon: const Icon(Icons.how_to_reg_outlined),
+                    onPressed: () {
+                      confirmPresence(Map<String, dynamic>.from(item));
+                    },
+                  ),
+                  IconButton(
+                    tooltip: 'Ver confirmados',
+                    icon: const Icon(Icons.groups_outlined),
+                    onPressed: () {
+                      showConfirmations(Map<String, dynamic>.from(item));
+                    },
+                  ),
                   IconButton(
                     tooltip: 'Editar',
                     icon: const Icon(Icons.edit),

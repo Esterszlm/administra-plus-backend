@@ -251,6 +251,12 @@ class _AdminTablePageState extends State<AdminTablePage> {
       final visibleActions = original.children.where((child) {
         if (child is! IconButton) return true;
         final tooltip = (child.tooltip ?? '').toLowerCase();
+        if (tooltip.contains('confirmar presen')) {
+          return access.can('confirmations_create');
+        }
+        if (tooltip.contains('confirmados')) {
+          return access.can('confirmations_view');
+        }
         if (tooltip.contains('editar')) return access.can('${module}_edit');
         if (tooltip.contains('excluir')) return access.can('${module}_delete');
         if (tooltip.contains('desativar') || tooltip.contains('reativar')) {
