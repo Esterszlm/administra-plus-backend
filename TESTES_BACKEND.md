@@ -20,6 +20,8 @@ Se necessário, crie os dados iniciais:
 python seed_data.py
 ```
 
+> **Testes automatizados:** além deste roteiro manual, a pasta `tests/` contém 33 casos automatizados que verificam autenticação, autorização, isolamento entre organizações e regras de negócio. Para executá-los: `python -m pytest tests -v` (resultado esperado: `33 passed`). Eles usam um banco temporário e não alteram o `administra.db`.
+
 ---
 
 ## 1. Teste da rota inicial
@@ -732,6 +734,7 @@ Ao final dos testes, o backend deve demonstrar:
 - Rotas protegidas por permissão.
 - Admin com acesso total.
 - Viewer com acesso limitado.
+- Viewer restrito aos dados da própria organização.
 - Validações de organização.
 - Validações de usuário.
 - Validações de evento.

@@ -30,6 +30,10 @@ Este documento apresenta a checklist final do projeto Administra+, com os princi
 - [ ] O backend foi enviado ao GitHub.
 - [ ] O frontend foi enviado ao GitHub.
 - [ ] A documentação foi enviada ao GitHub.
+- [ ] A branch de entrega é `tcc-versao-final`.
+- [ ] A branch `tcc-finalizacao` foi preservada como versão anterior às correções.
+- [ ] Os scripts auxiliares `aplicar_*.py` não foram enviados ao GitHub.
+- [ ] Nenhuma chave, senha real ou arquivo `.env` foi enviado ao GitHub.
 
 Tags criadas:
 
@@ -224,6 +228,17 @@ flutter run -d chrome
 - [ ] `TESTES_FRONTEND.md` possui roteiro de testes do frontend.
 - [ ] `ROTEIRO_APRESENTACAO.md` possui roteiro para apresentar o projeto.
 - [ ] `CHECKLIST_FINAL_TCC.md` foi criado para revisão final.
+- [ ] `README.md` explica como rodar os testes automatizados.
+
+---
+
+## 13.1 Testes automatizados
+
+- [ ] `python -m pytest tests -v` termina com `33 passed`.
+- [ ] Os testes não alteraram o `administra.db` de desenvolvimento.
+- [ ] Um viewer com permissão de eventos vê somente os eventos da própria organização.
+- [ ] O administrador vê os eventos de todas as organizações.
+- [ ] A tela de eventos abre para um viewer sem permissão de organizações.
 
 ---
 
@@ -241,6 +256,8 @@ Antes da apresentação, separar evidências como:
 - [ ] Print da tela de eventos.
 - [ ] Print da tela financeira.
 - [ ] Print das tags do GitHub.
+- [ ] Print do terminal com `33 passed`.
+- [ ] Print da tela de eventos de um viewer mostrando apenas a própria organização.
 
 ---
 
@@ -262,9 +279,10 @@ Durante a apresentação, seguir esta ordem:
 12. Mostrar eventos.
 13. Mostrar financeiro.
 14. Mostrar logout.
-15. Explicar segurança e permissões.
-16. Explicar limitações.
-17. Explicar trabalhos futuros.
+15. Explicar segurança, permissões e isolamento entre organizações.
+16. Mostrar os testes automatizados (`33 passed`).
+17. Explicar limitações.
+18. Explicar trabalhos futuros.
 
 ---
 
@@ -272,7 +290,8 @@ Durante a apresentação, seguir esta ordem:
 
 - [ ] O projeto é um protótipo acadêmico.
 - [ ] O banco utilizado é SQLite local.
-- [ ] O frontend possui foco em consulta.
+- [ ] A confirmação de presença ainda não possui fluxo completo na interface.
+- [ ] Os testes automatizados cobrem apenas o backend.
 - [ ] O sistema ainda não possui deploy em produção.
 - [ ] O sistema ainda não possui recuperação de senha.
 - [ ] O sistema ainda não possui relatórios PDF.
@@ -285,7 +304,9 @@ Durante a apresentação, seguir esta ordem:
 
 - [ ] Migrar banco para PostgreSQL.
 - [ ] Fazer deploy em nuvem.
-- [ ] Criar telas completas de cadastro e edição no frontend.
+- [ ] Criar fluxo de confirmação de presença na interface.
+- [ ] Otimizar as consultas da listagem de eventos.
+- [ ] Guardar a chave JWT em um serviço de gerenciamento de segredos.
 - [ ] Criar recuperação de senha.
 - [ ] Criar relatórios exportáveis.
 - [ ] Criar notificações por e-mail ou WhatsApp.
@@ -304,7 +325,7 @@ O projeto Administra+ está pronto para ser apresentado quando:
 - O backend estiver funcionando.
 - O frontend estiver funcionando.
 - O GitHub estiver atualizado.
-- Os testes principais tiverem sido executados.
+- Os testes principais tiverem sido executados, incluindo os testes automatizados.
 - A documentação estiver revisada.
 - A apresentação estiver ensaiada.
 

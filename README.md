@@ -6,7 +6,7 @@ O Administra+ centraliza o cadastro de organizações, usuários, eventos, confi
 
 > **Estado do projeto:** versão funcional para demonstração acadêmica, com backend FastAPI e frontend Flutter Web integrados. Não é uma solução homologada para produção.
 >
-> **Referência do código revisado:** branch `tcc-finalizacao`, commit `e537ba9` (`Finaliza permissoes individuais e interface compacta`). O README atualizado ainda precisa ser registrado em um novo commit.
+> **Versão de entrega:** branch `tcc-versao-final`. A branch `tcc-finalizacao` preserva a versão anterior às correções de segurança, usada como base de comparação na avaliação experimental do TCC.
 
 ## Tecnologias
 
@@ -17,6 +17,7 @@ O Administra+ centraliza o cadastro de organizações, usuários, eventos, confi
 | Autenticação | JWT e armazenamento de senhas com hash (Passlib) |
 | Interface | Flutter Web (Dart) |
 | Documentação e testes de API | Swagger / OpenAPI, disponibilizado pelo FastAPI |
+| Testes automatizados | pytest e cliente de testes do FastAPI |
 | Versionamento | Git e GitHub |
 
 ## Funcionalidades implementadas
@@ -29,6 +30,7 @@ O Administra+ centraliza o cadastro de organizações, usuários, eventos, confi
 - **Usuários:** cadastro, consulta e edição; status ativo/desativado, data e motivo de desativação, com preservação do histórico relacionado.
 - **Financeiro:** lançamentos de entrada e saída, associação opcional a usuários, consulta de histórico e resumo financeiro individual.
 - **Permissões:** administrador define os módulos e as ações autorizadas para usuários do perfil `viewer`; telas e ações não autorizadas são ocultadas na interface. A API também utiliza validações de autorização.
+- **Isolamento entre organizações:** usuários do perfil `viewer` consultam e alteram somente dados da própria organização em todos os módulos (organizações, eventos, confirmações, financeiro, usuários e dashboard). O administrador acessa todas as organizações.
 - **Produtividade na interface:** pesquisa, filtros e exportação CSV nas telas em que esses recursos foram implementados.
 
 A interface Flutter Web possui login, menu lateral, dashboard e telas de organizações, eventos, financeiro e usuários. O gerenciamento de permissões é acessível ao administrador no menu de ações dos usuários com perfil Visualizador.
@@ -45,6 +47,10 @@ Administra+_api/
 ├── requirements.txt
 ├── seed_data.py
 ├── migrar_catalogo_permissoes.py
+├── benchmark_desempenho.py
+├── tests/
+│   ├── conftest.py
+│   └── test_administra.py
 ├── routers/
 │   ├── users.py
 │   ├── organizations.py
@@ -84,7 +90,7 @@ python -m venv .venv
 python -m pip install -r requirements.txt
 ```
 
-Se as dependências já estiverem instaladas em um ambiente virtual existente, reutilize-o.
+Se as dependências já estiverem instaladas em um ambiente virtual existente, reutilize-o. Se o Python do computador já tiver as dependências instaladas, a ativação do ambiente virtual pode ser dispensada.
 
 ### 2. Preparar o banco de dados
 
@@ -112,6 +118,17 @@ Os acessos de demonstração eventualmente definidos no `seed_data.py` destinam-
 uvicorn main:app --reload
 ```
 
+Sem ambiente virtual, use `python -m uvicorn main:app --reload`.
+
+**Chave de assinatura dos tokens:** a chave JWT é lida da variável de ambiente `ADMINISTRA_SECRET_KEY`. Se a variável não estiver definida, o sistema gera uma chave aleatória a cada inicialização; nesse caso, ao reiniciar o backend, é necessário fazer login novamente. Para manter a sessão entre reinícios no ambiente local:
+
+```powershell
+$env:ADMINISTRA_SECRET_KEY = "uma-chave-longa-e-aleatoria"
+uvicorn main:app --reload
+```
+
+Nunca escreva a chave no código-fonte nem a envie ao GitHub.
+
 Documentação interativa: <http://127.0.0.1:8000/docs>
 
 A documentação OpenAPI expõe os endpoints disponíveis na versão efetivamente executada, sendo a referência para parâmetros e esquemas das requisições.
@@ -132,7 +149,7 @@ Para realizar a análise estática do aplicativo:
 flutter analyze
 ```
 
-A aplicação deve conseguir alcançar o backend configurado em `lib/services/api_service.dart`. Em execução local, verifique o endereço e a porta utilizados pela API.
+O endereço do backend é definido em `lib/screens/login_page.dart` (`http://127.0.0.1:8000`). Em execução local, verifique o endereço e a porta utilizados pela API.
 
 ## Controle de acesso
 
@@ -155,7 +172,26 @@ O catálogo delegável utilizado na interface administrativa contempla:
 
 As permissões de administração do próprio catálogo não são delegadas pelo painel de permissões dos visualizadores. Esconder menus no Flutter é um recurso de usabilidade: a restrição efetiva precisa ser conferida também nos endpoints do FastAPI.
 
-**Limitação conhecida:** o isolamento completo dos dados entre organizações ainda não foi validado para todos os módulos. O campo de organização principal de um usuário não representa, por si só, autorização para acessar várias organizações. O suporte formal a múltiplos vínculos organizacionais permanece como melhoria futura.
+**Isolamento por organização:** além da permissão de módulo, a API verifica se o registro pertence à organização do usuário (função `ensure_same_organization`, em `auth.py`). Esse comportamento é verificado pelos testes automatizados. Cada usuário pertence a uma única organização; o vínculo a várias organizações permanece como melhoria futura.
+
+## Testes automatizados
+
+A pasta `tests/` contém 33 casos de teste do backend, organizados em quatro categorias: autenticação (8), autorização por funcionalidade (6), isolamento entre organizações (11) e regras de negócio (8). Os testes criam um banco temporário próprio e **não alteram** o `administra.db` de desenvolvimento.
+
+```powershell
+python -m pip install pytest httpx
+python -m pytest tests -v
+```
+
+Resultado esperado: `33 passed`.
+
+Na versão anterior às correções (branch `tcc-finalizacao`), 25 dos 33 casos eram aprovados. As falhas correspondiam à chave JWT fixa no código-fonte e à falta de isolamento entre organizações nos módulos de eventos, organizações, confirmações e dashboard.
+
+O script `benchmark_desempenho.py` compara o tempo de resposta de rotas da API em uma base de testes também temporária:
+
+```powershell
+python benchmark_desempenho.py . resultado.json
+```
 
 ## Principais endpoints
 
@@ -188,7 +224,9 @@ A lista é **resumida**, não exaustiva. Consulte `/docs` para confirmar as oper
 5. Consultar detalhes de um usuário desativado, incluindo motivo, e verificar que seu histórico financeiro foi preservado.
 6. Abrir **Usuários → menu de três pontos → Gerenciar permissões** de uma conta `viewer` e liberar apenas **Organizações → Visualizar**.
 7. Entrar com essa conta em uma nova sessão e confirmar que os outros módulos não aparecem; conferir em `/docs` que o endpoint de um módulo não autorizado devolve `403`.
-8. Demonstrar pesquisa, filtragem e exportação CSV em uma tela compatível.
+8. Com um `viewer` que tenha permissão de eventos, confirmar que a tela de Eventos exibe somente os eventos da organização desse usuário, enquanto o administrador visualiza os eventos de todas as organizações.
+9. Executar `python -m pytest tests -v` e confirmar `33 passed`.
+10. Demonstrar pesquisa, filtragem e exportação CSV em uma tela compatível.
 
 Este roteiro indica **o que deve ser testado**; não comprova que todas as verificações foram executadas na versão final.
 
@@ -207,10 +245,12 @@ A presença e a versão efetiva desses arquivos devem ser conferidas na branch d
 
 O Administra+ é um **protótipo acadêmico executado localmente**. Para uma eventual implantação comercial, seriam necessárias etapas adicionais de segurança, operação e conformidade, incluindo:
 
-- Revisão integral da autorização por organização, inclusive em consultas e exportações.
 - Possibilidade de vincular um usuário a múltiplas organizações, com regras de autorização explícitas.
-- Configuração segura de segredos JWT e credenciais por ambiente, sem valores fixos no código.
-- Testes automatizados, auditoria, monitoramento, backups e plano de recuperação.
+- Armazenamento da chave JWT em um serviço de gerenciamento de segredos.
+- Otimização da listagem de eventos, que hoje executa uma consulta adicional por evento para obter o nome da organização.
+- Testes automatizados do frontend, testes de carga com tráfego de rede, auditoria, monitoramento, backups e plano de recuperação.
+- Troca das credenciais de demonstração do `seed_data.py` antes de qualquer publicação.
+- Avaliação de usabilidade com usuários finais, mediante aprovação de Comitê de Ética em Pesquisa.
 - Adequações à LGPD e políticas de privacidade e retenção.
 - Avaliação de PostgreSQL e infraestrutura de implantação.
 - Recuperação de senha, notificações e outras melhorias de experiência.
@@ -221,11 +261,11 @@ Esses itens **não são declarados como funcionalidades concluídas** na versão
 
 Repositório: <https://github.com/Esterszlm/administra-plus-backend>
 
-- **Branch de finalização:** `tcc-finalizacao`
-- **Commit de referência do sistema:** `e537ba9`
-- **Escopo da entrega:** código-fonte do backend e do Flutter Web, documentação e evidências requeridas pela instituição.
+- **Branch de entrega:** `tcc-versao-final` (citada no artigo do TCC)
+- **Branch anterior às correções:** `tcc-finalizacao` (base de comparação)
+- **Escopo da entrega:** código-fonte do backend e do Flutter Web, testes automatizados, documentação e evidências requeridas pela instituição.
 
-A existência de tags antigas no histórico não significa que apontem para este último commit. Antes de submeter, confira a branch e o commit efetivamente disponibilizados ao avaliador.
+As tags antigas (`v1.0-backend`, `v1.0-administra-plus`) apontam para versões anteriores e não incluem as correções de segurança.
 
 ---
 

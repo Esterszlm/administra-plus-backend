@@ -74,6 +74,7 @@ O projeto foi desenvolvido utilizando as seguintes tecnologias:
 - JWT para autenticação.
 - Passlib para hash de senhas.
 - Swagger para documentação e testes da API.
+- pytest para testes automatizados.
 
 ### Frontend
 
@@ -137,6 +138,8 @@ O funcionamento é o seguinte:
 4. O frontend utiliza esse token para acessar rotas protegidas.
 5. O backend verifica o token antes de permitir o acesso aos dados.
 
+A chave usada para assinar os tokens é lida de uma variável de ambiente e não fica escrita no código-fonte. Sem a variável, o sistema gera uma chave aleatória a cada inicialização.
+
 Além disso, o sistema possui controle de permissões.
 
 O usuário administrador possui acesso total ao sistema.
@@ -170,6 +173,8 @@ Exemplos de permissões:
 - `dashboard_view`
 
 Esse modelo permite que o sistema tenha maior controle sobre quais usuários podem acessar ou executar determinadas ações.
+
+Além da permissão de módulo, a API verifica se cada registro pertence à organização do usuário. Assim, um usuário viewer consulta e altera apenas dados da própria organização, enquanto o administrador acessa todas.
 
 ---
 
@@ -380,6 +385,8 @@ GET /events/
 
 Mostrar os eventos cadastrados e seus dados principais.
 
+Em seguida, entrar com um usuário viewer que tenha permissão de eventos e mostrar que ele visualiza somente os eventos da própria organização.
+
 ---
 
 ### Passo 9 — Mostrar financeiro
@@ -430,6 +437,8 @@ O usuário administrador possui acesso total.
 
 A usuária Maria possui acesso limitado de acordo com as permissões atribuídas.
 
+Essas credenciais servem apenas para demonstração no ambiente local e devem ser trocadas antes de qualquer publicação do sistema.
+
 ---
 
 ## 12. Validações importantes implementadas
@@ -444,9 +453,37 @@ Exemplos:
 - Não permitir confirmação duplicada do mesmo usuário no mesmo evento.
 - Não permitir lançamento financeiro com valor zero ou negativo.
 - Não permitir tipo financeiro inválido.
-- Não permitir excluir o próprio usuário.
-- Não permitir excluir o último administrador.
+- Não permitir exclusão física de usuários: a desativação preserva o histórico.
+- Não permitir que o administrador desative a própria conta.
+- Não permitir desativar ou rebaixar o último administrador ativo.
 - Não permitir excluir evento com confirmações vinculadas.
+- Não permitir acesso a dados de outra organização.
+
+---
+
+## 12.1 Avaliação experimental por testes automatizados
+
+O controle de acesso foi avaliado com 33 casos de teste automatizados (pytest), em quatro categorias: autenticação, autorização por funcionalidade, isolamento entre organizações e regras de negócio.
+
+| Versão | Casos aprovados |
+| --- | --- |
+| Original (`tcc-finalizacao`) | 25 de 33 (75,8%) |
+| Corrigida (`tcc-versao-final`) | 33 de 33 (100%) |
+
+Falhas encontradas na versão original:
+
+- A chave de assinatura dos tokens JWT estava escrita no código-fonte público, o que permitia gerar um token de administrador sem senha.
+- Os módulos de eventos, organizações, confirmações e dashboard não restringiam os dados à organização do usuário.
+
+Após as correções, todos os casos foram aprovados. A comparação de desempenho mostrou que as verificações de isolamento não acrescentaram custo relevante ao tempo de resposta.
+
+Para demonstrar:
+
+```bash
+python -m pytest tests -v
+```
+
+Resultado esperado: `33 passed`.
 
 ---
 
@@ -460,6 +497,9 @@ O projeto possui arquivos de apoio para comprovar os testes e a organização do
 - `ROTEIRO_APRESENTACAO.md`
 - `requirements.txt`
 - `seed_data.py`
+- Pasta `tests/` com os testes automatizados.
+- `benchmark_desempenho.py` com a comparação de desempenho.
+- Branch `tcc-versao-final` no GitHub.
 - Tags de versão no GitHub.
 
 Tags criadas:
@@ -468,6 +508,8 @@ Tags criadas:
 v1.0-backend
 v1.0-administra-plus
 ```
+
+As tags apontam para versões anteriores às correções de segurança. A versão de entrega é a branch `tcc-versao-final`.
 
 ---
 
@@ -478,7 +520,9 @@ Como o projeto foi desenvolvido como um protótipo acadêmico, algumas funcional
 Limitações atuais:
 
 - Banco de dados local SQLite.
-- Frontend com foco em consulta, não em cadastro completo.
+- Confirmação de presença sem fluxo completo na interface.
+- Testes automatizados restritos ao backend.
+- Listagem de eventos com uma consulta adicional por evento.
 - Sem deploy em produção.
 - Sem recuperação de senha.
 - Sem autenticação por e-mail real.
@@ -495,7 +539,10 @@ Como melhorias futuras, o sistema pode evoluir com:
 
 - Migração para PostgreSQL.
 - Deploy em nuvem.
-- Cadastro e edição completa pelo frontend.
+- Confirmação de presença pela interface.
+- Otimização das consultas da listagem de eventos.
+- Armazenamento da chave JWT em um serviço de gerenciamento de segredos.
+- Avaliação de usabilidade com usuários finais, mediante aprovação de Comitê de Ética em Pesquisa.
 - Recuperação de senha.
 - Controle financeiro mais detalhado.
 - Relatórios exportáveis em PDF.
@@ -513,7 +560,7 @@ Como melhorias futuras, o sistema pode evoluir com:
 
 ## 16. Conclusão da apresentação
 
-O Administra+ demonstra a aplicação prática dos conceitos estudados no curso, unindo backend, frontend, banco de dados, autenticação, segurança, permissões e versionamento.
+O Administra+ demonstra a aplicação prática dos conceitos estudados no curso, unindo backend, frontend, banco de dados, autenticação, segurança, permissões, versionamento e verificação por testes automatizados.
 
 O sistema desenvolvido atende ao objetivo de criar uma solução administrativa funcional para organizações que precisam controlar usuários, eventos, confirmações, permissões e informações financeiras.
 

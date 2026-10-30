@@ -395,7 +395,8 @@ Durante a apresentação do TCC, recomenda-se demonstrar:
 7. Tela de organizações.
 8. Tela de eventos.
 9. Tela financeira.
-10. Logout.
+10. Tela de eventos de um viewer, exibindo somente os eventos da própria organização.
+11. Logout.
 
 ---
 
@@ -410,5 +411,6 @@ Ao final dos testes, o frontend deve demonstrar:
 - Exibição de dados reais vindos do banco.
 - Navegação básica por menu lateral.
 - Integração entre Flutter Web e FastAPI.
+- Restrição dos dados exibidos à organização do usuário viewer.
 
 O frontend desenvolvido atende ao objetivo de apresentar uma interface mínima funcional para o sistema Administra+.
